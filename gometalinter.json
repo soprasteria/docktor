@@ -14,8 +14,7 @@
     "goconst",
     "gosimple",
     "staticcheck",
-    "misspell",
-    "gotype"
+    "misspell"
   ],
   "Test": true
 }
