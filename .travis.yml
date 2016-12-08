@@ -16,7 +16,7 @@ before_install:
   - node --version && npm --version
 
 install:
-  - go get -v github.com/golang/lint/golint
+  - go get -u github.com/alecthomas/gometalinter
   - go get -v github.com/kardianos/govendor
   - govendor sync -v
   - go get -t -v ./cmd/... ./model/... ./server/...
@@ -24,16 +24,8 @@ install:
   - yarn install
 
 script:
-  - go vet ./main.go
-  - go vet ./cmd/... ./model/... ./server/...
-
-  - golint ./main.go
-  - golint ./cmd/...
-  - golint ./model/...
-  - golint ./server/...
-
+  - gometalinter --deadline=10m --config=./gometalinter.json ./server/... ./model/... ./cmd/... .
   - go test ./cmd/... ./model/... ./server/...
 
   - npm run lint
-
   - npm run dist

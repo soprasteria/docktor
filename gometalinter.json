@@ -1,0 +1,25 @@
+{
+  "DisableAll": true,
+  "Enable": [
+    "unused",
+    "vet",
+    "vetshadow",
+    "gotype",
+    "deadcode",
+    "gocyclo",
+    "gofmt",
+    "golint",
+    "varcheck",
+    "structcheck",
+    "aligncheck",
+    "errcheck",
+    "ineffassign",
+    "interfacer",
+    "unconvert",
+    "goconst",
+    "gosimple",
+    "staticcheck",
+    "misspell"
+  ],
+  "Test": true
+}

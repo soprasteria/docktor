@@ -20,10 +20,7 @@ func Get(client *redis.Client, key string, value interface{}) error {
 		return err
 	}
 	err = json.Unmarshal([]byte(j), value)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // Set the value if the client exist
@@ -36,10 +33,7 @@ func Set(client *redis.Client, key string, value interface{}, ttl time.Duration)
 		return err
 	}
 	err = client.Set(key, bytes, ttl).Err()
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // GetRedis : retrieve redis from echo context or nil
