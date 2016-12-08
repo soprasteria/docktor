@@ -4,6 +4,9 @@ go:
   - 1.6
   - 1.7
 
+env:
+  - GO_VENDOR=1
+
 cache:
   directories:
     - bower_components
@@ -17,7 +20,7 @@ before_install:
 install:
   - go get -u github.com/alecthomas/gometalinter
   - go get -v github.com/kardianos/govendor
-  - GO_VENDOR=1 gometalinter -u -i -f
+  - gometalinter -u -i -f
   - govendor sync -v
   - go get -u github.com/stretchr/testify
   - npm install -g yarn
@@ -26,7 +29,6 @@ install:
 script:
   - go build
   - go test ./cmd/... ./model/... ./server/...
-  - GO_VENDOR=1
   - travis_wait 30 gometalinter --vendor --deadline=10m --config=./gometalinter.json ./server/... ./model/... ./cmd/... .
 
   - npm run lint
