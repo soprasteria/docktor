@@ -4,7 +4,6 @@
     "unused",
     "vet",
     "vetshadow",
-    "gotype",
     "deadcode",
     "gocyclo",
     "gofmt",

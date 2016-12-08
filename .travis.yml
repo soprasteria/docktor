@@ -16,17 +16,16 @@ before_install:
 
 install:
   - go get -u github.com/alecthomas/gometalinter
-  - gometalinter --install
   - go get -v github.com/kardianos/govendor
+  - GO_VENDOR=1 gometalinter -u -i -f
   - govendor sync -v
-  - go get -t -v ./cmd/... ./model/... ./server/... .
   - go get -u github.com/stretchr/testify
   - npm install -g yarn
   - yarn install
 
 script:
   - go build
-  - travis_wait 30 gometalinter --vendor --deadline=10m --config=./gometalinter.json ./server/... ./model/... ./cmd/... .
+  - travis_wait 30 GO_VENDOR=1 gometalinter --vendor --deadline=10m --config=./gometalinter.json ./server/... ./model/... ./cmd/... .
   - go test ./cmd/... ./model/... ./server/...
 
   - npm run lint
