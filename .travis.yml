@@ -20,6 +20,7 @@ install:
   - gometalinter --install
   - go get -v github.com/kardianos/govendor
   - govendor sync -v
+  - go get -t -v ./cmd/... ./model/... ./server/... .
   - npm install -g yarn
   - yarn install
 
