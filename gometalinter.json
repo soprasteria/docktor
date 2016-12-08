@@ -9,16 +9,13 @@
     "gofmt",
     "golint",
     "varcheck",
-    "structcheck",
-    "aligncheck",
     "errcheck",
     "ineffassign",
-    "interfacer",
-    "unconvert",
     "goconst",
     "gosimple",
     "staticcheck",
-    "misspell"
+    "misspell",
+    "gotype"
   ],
   "Test": true
 }
