@@ -16,11 +16,11 @@ before_install:
   - node --version && npm --version
 
 install:
+  - go get -u github.com/stretchr/testify
   - go get -u github.com/alecthomas/gometalinter
   - gometalinter --install
   - go get -v github.com/kardianos/govendor
   - govendor sync -v
-  - go get -t -v ./cmd/... ./model/... ./server/...
   - npm install -g yarn
   - yarn install
 
