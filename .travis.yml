@@ -1,7 +1,6 @@
 language: go
 
 go:
-  - 1.6
   - 1.7
 
 env:
@@ -29,7 +28,7 @@ install:
 script:
   - go build
   - go test ./cmd/... ./model/... ./server/...
-  - travis_wait 30 gometalinter --vendor --deadline=10m --config=./gometalinter.json ./server/... ./model/... ./cmd/... .
+  - travis_wait 60 gometalinter --vendor --deadline=60m --config=./gometalinter.json ./server/... ./model/... ./cmd/... .
 
   - npm run lint
   - npm run dist
