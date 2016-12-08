@@ -8,7 +8,6 @@
     "gocyclo",
     "gofmt",
     "golint",
-    "varcheck",
     "errcheck",
     "ineffassign",
     "goconst",
