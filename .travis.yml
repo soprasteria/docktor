@@ -25,7 +25,7 @@ install:
   - yarn install
 
 script:
-  - gometalinter --deadline=10m --config=./gometalinter.json ./server/... ./model/... ./cmd/... .
+  - gometalinter --vendor --deadline=10m --config=./gometalinter.json ./server/... ./model/... ./cmd/... .
   - go test ./cmd/... ./model/... ./server/...
 
   - npm run lint
