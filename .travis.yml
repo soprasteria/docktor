@@ -25,6 +25,7 @@ install:
   - yarn install
 
 script:
+  - go build
   - gometalinter --vendor --deadline=10m --config=./gometalinter.json ./server/... ./model/... ./cmd/... .
   - go test ./cmd/... ./model/... ./server/...
 
