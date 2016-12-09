@@ -1,7 +1,6 @@
 package daemons
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/soprasteria/docktor/model/types"
@@ -42,21 +41,11 @@ func GetInfo(daemon types.Daemon, client *redis.Client, force bool) (*DaemonInfo
 	dockerInfo, err := api.Docker.Info()
 	if err != nil {
 		info = &DaemonInfo{Status: statusDOWN, NbImages: 0, NbContainers: 0, Message: err.Error()}
-		go func() {
-			err := redisw.Set(client, key, info, 5*time.Minute)
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-		}()
+		go redisw.Set(client, key, info, 5*time.Minute)
 		return info, nil
 	}
 
 	info = &DaemonInfo{Status: statusUP, NbImages: dockerInfo.Images, NbContainers: dockerInfo.Containers}
-	go func() {
-		err := redisw.Set(client, key, info, 5*time.Minute)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-	}()
+	go redisw.Set(client, key, info, 5*time.Minute)
 	return info, nil
 }
