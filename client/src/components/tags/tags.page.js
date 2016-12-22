@@ -43,6 +43,7 @@ class Tags extends React.Component {
     const onChangeFilter = this.props.onChangeFilter;
     const availableUsageRights = this.usageRoles;
     const availableCategories = this.props.availableCategories;
+
     return (
       <div className='flex layout vertical start-justified'>
         <div className='layout horizontal justified tags-bar'>
