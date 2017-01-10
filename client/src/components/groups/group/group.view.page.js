@@ -10,10 +10,12 @@ import TagsThunks from '../../../modules/tags/tags.thunks.js';
 import DaemonsThunks from '../../../modules/daemons/daemons.thunks.js';
 import GroupsThunks from '../../../modules/groups/groups.thunks.js';
 import UsersThunks from '../../../modules/users/users.thunks.js';
+import ServicesThunks from '../../../modules/services/services.thunks.js';
 import ToastsActions from '../../../modules/toasts/toasts.actions.js';
 
 // Selectors
 import { getDaemonsAsFSOptions } from '../../../modules/daemons/daemons.selectors.js';
+import { getContainersGroupByCategory } from '../../../modules/groups/groups.selectors.js';
 import { ALL_ROLES, getRoleData } from '../../../modules/auth/auth.constants.js';
 import { GROUP_MODERATOR_ROLE } from '../../../modules/groups/groups.constants.js';
 
@@ -47,14 +49,17 @@ class GroupViewComponent extends React.Component {
       this.props.fetchGroup(groupId);
       this.props.fetchTags();
       this.props.fetchDaemons();
+      this.props.fetchContainers(); // TODO : replace by fetchServices thunk (that does not get all services)
       this.props.fetchUsers(); // TODO : replace by fetchMembers thunk (that does not get all users)
     }
+    $('#group-by-dropdown').dropdown();
   }
 
   componentDidUpdate(prevProps, prevState) {
     if (prevProps.isFetching) {
       this.refs.scrollbars.scrollTop();
     }
+    $('#group-by-dropdown').dropdown();
   }
 
   getMembersEmail(members, users) {
@@ -135,7 +140,7 @@ class GroupViewComponent extends React.Component {
   }
 
   render() {
-    const { isFetching, group, daemons, tags, users } = this.props;
+    const { isFetching, group, containers, daemons, tags, users } = this.props;
     return (
       <div className='flex layout vertical start-justified group-view-page'>
         <Scrollbars ref='scrollbars' className='flex ui dimmable'>
@@ -171,19 +176,60 @@ class GroupViewComponent extends React.Component {
                       {this.renderMembers(group, users)}
                     </HeadingBox>
                     <HeadingBox className='box-component ui form' icon='cube icon' title='Containers'>
-                      <div className='ui buttons'>
-                        <div className='ui icon disabled button'><i className='stop icon' />Stop all</div>
-                        <div className='ui icon disabled button'><i className='play icon' />Start all</div>
-                        <div className='ui icon disabled button'><i className='repeat icon' />Restart all</div>
-                        <div className='ui icon disabled button'><i className='cloud upload icon' />Redeploy all</div>
-                        <div className='ui icon disabled button'><i className='trash icon' />Uninstall all</div>
-                      </div>
-                      <div className='flex layout center-justified horizontal wrap'>
-                        {group.containers.map(container => {
-                          return <ContainerCard key={container.id} daemons={daemons} container={container} />;
-                        })
-                        }
+                      <div className='layout horizontal justified'>
+                        <div className='ui buttons'>
+                          <div className='ui icon button'><i className='stop icon' />Stop all</div>
+                          <div className='ui icon button'><i className='play icon' />Start all</div>
+                          <div className='ui icon button'><i className='repeat icon' />Restart all</div>
+                          <div className='ui icon button'><i className='cloud upload icon' />Redeploy all</div>
+                          <div className='ui icon button'><i className='trash icon' />Uninstall all</div>
                         </div>
+                        <div className='layout horizontal jusitified' >
+                           <div id='group-by-dropdown' className='ui floating dropdown labeled icon button'>
+                            <i className='filter icon' />
+                            <span className='text'>Group by</span>
+                            <div className='menu'>
+                              <div className='ui icon search input'>
+                                <i className='search icon' />
+                                <input type='text' placeholder='Search...' />
+                              </div>
+                              <div className='scrolling menu'>
+                                <div className='item' style={{ color:'grey' }}>
+                                  No group
+                                </div>
+                                <div className='divider' />
+                                <div className='item'>
+                                  Package CDK
+                                </div>
+                                <div className='item'>
+                                  Service fonctionnel
+                                </div>
+                                <div className='item'>
+                                  Maturité
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          <div className='ui toggle buttons'>
+                              <button className='ui icon active button'><i className='grid layout icon' /></button>
+                              <button className='ui icon button'><i className='list layout icon' /></button>
+                            </div>
+                        </div>
+                      </div>
+                      {Object.keys(containers).sort().map(c => {
+                        const category = containers[c];
+                        return (<div><h4 className='ui horizontal divider header'>
+                                {c}
+                              </h4>
+                                <div className='flex layout horizontal wrap'>
+                                  {category.map(container => {
+                                    return <ContainerCard key={container.id} daemons={daemons} container={container} />;
+                                  })
+                                  }
+                                </div></div>
+                        );
+                      })
+                      }
                     </HeadingBox>
                   </div>
                 </div>
@@ -196,15 +242,18 @@ class GroupViewComponent extends React.Component {
 }
 GroupViewComponent.propTypes = {
   group: React.PropTypes.object,
+  containers: React.PropTypes.array,
   isFetching: React.PropTypes.bool,
   groupId: React.PropTypes.string,
   daemons: React.PropTypes.array,
   tags: React.PropTypes.object,
   users: React.PropTypes.object,
+  services: React.PropTypes.object,
   fetchGroup: React.PropTypes.func.isRequired,
   fetchDaemons: React.PropTypes.func.isRequired,
   fetchTags: React.PropTypes.func.isRequired,
   fetchUsers: React.PropTypes.func.isRequired,
+  fetchContainers: React.PropTypes.func.isRequired,
   onSave: React.PropTypes.func,
   onDelete: React.PropTypes.func
 };
@@ -213,19 +262,23 @@ GroupViewComponent.propTypes = {
 const mapStateToProps = (state, ownProps) => {
   const paramId = ownProps.params.id;
   const groups = state.groups;
-  const group = groups.selected;
+  const selectedGroup = groups.selected;
   const emptyGroup = { tags: [], filesystems: [], containers: [] };
+  const group = groups.items[paramId] || emptyGroup;
   const daemons = getDaemonsAsFSOptions(state.daemons.items) || [];
+  const services = state.services;
   const tags = state.tags;
   const users = state.users;
-  const isFetching = paramId && (paramId !== group.id);
+  const containers = getContainersGroupByCategory(group.containers || [], services, tags);
+  const isFetching = paramId && (paramId !== selectedGroup.id);
   return {
-    group: groups.items[paramId] || emptyGroup,
+    group,
     isFetching,
     groupId: paramId,
     tags,
     daemons,
-    users
+    users,
+    containers
   };
 };
 
@@ -235,7 +288,8 @@ const mapDispatchToProps = (dispatch) => {
     fetchGroup: (id) => dispatch(GroupsThunks.fetchGroup(id)),
     fetchDaemons: () => dispatch(DaemonsThunks.fetchIfNeeded()),
     fetchTags: () => dispatch(TagsThunks.fetchIfNeeded()),
-    fetchUsers: () => dispatch(UsersThunks.fetchIfNeeded())
+    fetchUsers: () => dispatch(UsersThunks.fetchIfNeeded()),
+    fetchContainers: () => dispatch(ServicesThunks.fetchIfNeeded()),
   };
 };
 

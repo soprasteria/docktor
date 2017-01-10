@@ -44,6 +44,11 @@ $yellow-button-color-active: #ad8000 !default;
       }
     }
 
+    .divider.header {
+      margin-top: 20px;
+      margin-bottom: 10px;
+    }
+
     a {
       color: $main;
       text-decoration: none;
