@@ -3,6 +3,7 @@ import React from 'react';
 import { Link } from 'react-router';
 import { Scrollbars } from 'react-custom-scrollbars';
 import { connect } from 'react-redux';
+import sortBy from 'lodash.sortby';
 import classNames from 'classnames';
 
 // Thunks / Actions
@@ -140,7 +141,7 @@ class GroupViewComponent extends React.Component {
   }
 
   render() {
-    const { isFetching, group, containers, daemons, tags, users } = this.props;
+    const { isFetching, group, containers, daemons, tags, users, services } = this.props;
     return (
       <div className='flex layout vertical start-justified group-view-page'>
         <Scrollbars ref='scrollbars' className='flex ui dimmable'>
@@ -211,22 +212,72 @@ class GroupViewComponent extends React.Component {
                             </div>
                           </div>
                           <div className='ui toggle buttons'>
-                              <button className='ui icon active button'><i className='grid layout icon' /></button>
-                              <button className='ui icon button'><i className='list layout icon' /></button>
+                              <button className='ui icon button'><i className='grid layout icon' /></button>
+                              <button className='ui icon active button'><i className='list layout icon' /></button>
                             </div>
                         </div>
                       </div>
                       {Object.keys(containers).sort().map(c => {
                         const category = containers[c];
-                        return (<div><h4 className='ui horizontal divider header'>
-                                {c}
-                              </h4>
-                                <div className='flex layout horizontal wrap'>
-                                  {category.map(container => {
-                                    return <ContainerCard key={container.id} daemons={daemons} container={container} />;
-                                  })
-                                  }
-                                </div></div>
+                        return (<div>
+                                  <h4 className='ui horizontal divider header'>{c}</h4>
+                                  <table className='ui fixed celled very compact table'>
+                                    <thead>
+                                      <tr>
+                                        <th className='three wide'>Service</th>
+                                        <th className='three wide'>Name</th>
+                                        <th className='eight wide'>Tags</th>
+                                        <th className='two wide center aligned'>Status</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {category.map(container => {
+                                        const service = services.items[container.serviceId] || { tags : [] };
+                                        container.tags = container.tags || [];
+                                        const colors = ['blue', 'orange', 'teal', 'violet', 'purple', 'yellow'];
+                                        return (
+                                        <tr>
+                                          <td>
+                                            {container.serviceTitle.toUpperCase()}
+                                          </td>
+                                          <td className='single line'>
+                                            {container.name}
+                                          </td>
+                                          <td>
+                                            <div className='ui labels'>
+                                            {service.tags.sort().map((t, index) => {
+
+                                              const color = colors[index % 6];
+                                              const tag = tags.items[t];
+                                              if (tag.name.raw !== c) {
+                                                return (<div className={`ui label ${color}`}>
+                                                          {tag.name.raw}
+                                                        </div>);
+                                              }
+                                              return '';
+                                            })}
+                                            {container.tags.map(t => {
+                                              const tag = tags.items[t];
+                                              return (<div className='ui label'>
+                                                {tag.name.raw}
+                                              </div>);
+                                            })}
+                                            </div>
+                                          </td>
+                                          <td className='center aligned'>
+                                            <button className='ui tiny compact green right labeled icon button'>
+                                              <i className='refresh icon' />
+                                              UP
+                                            </button>
+                                          </td>
+                                        </tr>
+                                        );
+                                      })
+                                      }
+
+                                    </tbody>
+                                  </table>
+                                </div>
                         );
                       })
                       }
@@ -240,6 +291,14 @@ class GroupViewComponent extends React.Component {
     );
   }
 }
+/**
+ *                                   <div className='flex layout horizontal wrap'>
+                                    {category.map(container => {
+                                      return <ContainerCard key={container.id} daemons={daemons} container={container} />;
+                                    })
+                                    }
+                                  </div>
+ */
 GroupViewComponent.propTypes = {
   group: React.PropTypes.object,
   containers: React.PropTypes.array,
@@ -278,7 +337,8 @@ const mapStateToProps = (state, ownProps) => {
     tags,
     daemons,
     users,
-    containers
+    containers,
+    services
   };
 };
 

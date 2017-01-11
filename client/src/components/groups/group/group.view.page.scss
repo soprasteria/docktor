@@ -59,6 +59,11 @@ $yellow-button-color-active: #ad8000 !default;
       }
     }
 
+    .ui.table thead th {
+      padding-top: .5em !important;
+      padding-bottom: .5em !important;
+    }
+
   }
 
   .labelised-field {
