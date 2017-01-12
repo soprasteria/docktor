@@ -66,10 +66,10 @@ class ServiceComponent extends React.Component {
     }
   }
 
-  handleChange = (e, { name, value }) => {
+  handleChange = (e, { name, value, checked }) => {
     const { service, errors } = this.state;
     const state = {
-      service: { ...service, [name]:value },
+      service: { ...service, [name]:value || checked },
       errors: { details: [...errors.details], fields: { ...errors.fields } }
     };
     delete state.errors.fields[name];
@@ -109,15 +109,19 @@ class ServiceComponent extends React.Component {
 
   renderGeneralTab = (service, selected, tags, errors) => {
     const classes = classNames('tab', { active: selected === 'general' });
+    const serviceActive = typeof service.active !== 'undefined' ? service.active : true;
     return (
       <Segment padded className={classes}>
         <Form className='service-form'>
           <Input type='hidden' name='created' value={service.created || ''} onChange={this.handleChange} />
           <Input type='hidden' name='id' value={service.id || ''} onChange={this.handleChange} />
 
-          <Form.Input required label='Title' name='title' value={service.title || ''} onChange={this.handleChange}
-            type='text' placeholder='A unique title' autoComplete='off' error={errors.fields['title']}
-          />
+          <Form.Group className='layout horizontal justified'>
+            <Form.Input required label='Title' name='title' value={service.title || ''} onChange={this.handleChange}
+              type='text' placeholder='A unique title' autoComplete='off' error={errors.fields['title']}  width='thirteen'
+            />
+            <Form.Checkbox toggle label='Enable service' name='active' checked={serviceActive} onChange={this.handleChange} />
+          </Form.Group>
 
           <Form.Group>
             <Form.Field width='two'>

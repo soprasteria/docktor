@@ -19,6 +19,7 @@ type Service struct {
 	URLs     URLs            `bson:"urls" json:"urls"`
 	Jobs     Jobs            `bson:"jobs" json:"jobs"`
 	Tags     []bson.ObjectId `bson:"tags" json:"tags"`
+	Active   bool            `bson:"active,omitempty" json:"active,omitempty"`
 }
 
 // AddImage adds an Image to the Service
