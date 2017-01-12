@@ -57,6 +57,15 @@ func (r *Repo) FindAll() ([]types.Group, error) {
 	return results, err
 }
 
+// FindAllWithMember gets all the groups with a specific member
+func (r *Repo) FindAllWithMember(userID string) ([]types.Group, error) {
+	results := []types.Group{}
+	err := r.Coll.Find(bson.M{
+		"members.user": &bson.M{"$eq": bson.ObjectIdHex(userID)},
+	}).All(&results)
+	return results, err
+}
+
 // FindAllByName get all groups by the give name
 func (r *Repo) FindAllByName(name string) ([]types.Group, error) {
 	results := []types.Group{}

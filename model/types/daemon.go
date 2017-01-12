@@ -10,7 +10,7 @@ import (
 type Daemon struct {
 	ID            bson.ObjectId   `bson:"_id,omitempty" json:"id,omitempty"`
 	Created       time.Time       `bson:"created" json:"created"`
-	Active        bool            `bson:"active" json:"active"`
+	Active        bool            `bson:"active,omitempty" json:"active,omitempty"`
 	Name          string          `bson:"name" json:"name"`
 	Protocol      string          `bson:"protocol" json:"protocol"`
 	Host          string          `bson:"host" json:"host"`

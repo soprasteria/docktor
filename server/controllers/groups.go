@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/labstack/echo"
 	api "github.com/soprasteria/docktor/model"
 	"github.com/soprasteria/docktor/model/types"
+	"github.com/soprasteria/docktor/server/auth"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -17,7 +19,26 @@ type Groups struct {
 //GetAll groups from docktor
 func (g *Groups) GetAll(c echo.Context) error {
 	docktorAPI := c.Get("api").(*api.Docktor)
-	groups, err := docktorAPI.Groups().FindAll()
+	authenticatedUser, err := getUserFromToken(c)
+	if err != nil {
+		return c.String(http.StatusForbidden, auth.ErrInvalidCredentials.Error())
+	}
+
+	log.WithFields(log.Fields{
+		"userID": authenticatedUser.ID,
+		"role":   authenticatedUser.Role,
+	}).Info("User trying to retrieve their groups")
+
+	var groups []types.Group
+
+	// TODO: supervisor
+	switch authenticatedUser.Role {
+	case types.AdminRole:
+		groups, err = docktorAPI.Groups().FindAll()
+	case types.UserRole:
+		groups, err = docktorAPI.Groups().FindAllWithMember(authenticatedUser.ID)
+	}
+
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Error while retreiving all groups")
 	}

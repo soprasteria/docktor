@@ -26,6 +26,8 @@ type RepoGroups interface {
 	FindAll() ([]types.Group, error)
 	// FindAllByName get all groups by the give name
 	FindAllByName(name string) ([]types.Group, error)
+	// FindAllWithMember gets all the groups with a specific member
+	FindAllWithMember(userID string) ([]types.Group, error)
 	// FindAllByRegex get all groups by the regex name
 	FindAllByRegex(nameRegex string) ([]types.Group, error)
 	// FindAllWithContainers get all groups that contains a list of containers

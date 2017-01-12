@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	api "github.com/soprasteria/docktor/model"
 	"github.com/soprasteria/docktor/server/auth"
@@ -246,4 +247,14 @@ func (a *Auth) ChangeResetPassword(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, Token{ID: authenticationToken, User: userRest})
+}
+
+func getUserFromToken(c echo.Context) (users.UserRest, error) {
+	docktorAPI := c.Get("api").(*api.Docktor)
+	userToken := c.Get("user-token").(*jwt.Token)
+
+	claims := userToken.Claims.(*auth.MyCustomClaims)
+
+	webservice := users.Rest{Docktor: docktorAPI}
+	return webservice.GetUserRest(claims.Username)
 }
