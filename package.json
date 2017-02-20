@@ -98,6 +98,7 @@
     "rodal": "1.4.0",
     "semantic-ui-css": "^2.2.4",
     "semantic-ui-react": "^0.64.7",
+    "socket.io-client": "^1.7.2",
     "uuid-js": "^0.7.5"
   }
 }

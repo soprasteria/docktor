@@ -14,6 +14,8 @@ import Sites from './sites/sites.component';
 import SitesThunks from '../../modules/sites/sites.thunks';
 import DaemonsThunks from '../../modules/daemons/daemons.thunks';
 import DaemonsActions from '../../modules/daemons/daemons.actions';
+import DaemonsConstants from '../../modules/daemons/daemons.constants';
+import DaemonsWS from '../../modules/daemons/daemons.websocket';
 
 // Selectors
 import { getFilteredDaemons } from '../../modules/daemons/daemons.selectors';
@@ -24,12 +26,48 @@ import './daemons.page.scss';
 // Daemons Component
 class Daemons extends React.Component {
 
+  constructor(props) {
+    super(props);
+  }
+
+  setupWebsocket() {
+    const receiveDaemonInfo = this.props.receiveDaemonInfo;
+    const ws = DaemonsWS.open();
+
+    ws.onopen = () => {
+      console.log('Websocket connected');
+
+    };
+
+    ws.onclose = () => {
+      console.log('Websocket disconnected');
+    };
+
+    ws.onmessage = (evt) => {
+      const res = JSON.parse(evt.data);
+      switch (res.action) {
+      case DaemonsConstants.RECEIVE_DAEMON_INFO:
+        receiveDaemonInfo(res.data.daemon, res.data.info);
+        break;
+      default:
+        break;
+      }
+    };
+    return ws;
+  }
+
+  componentWillUnmount() {
+    DaemonsWS.close();
+  }
+
   componentWillMount = () => {
+    this.ws = this.setupWebsocket();
     this.props.fetchSite();
     this.props.fetchDaemons();
   }
 
   render = () => {
+    const ws = this.ws;
     const { sites, daemons, isFetching, filterValue, changeFilter } = this.props;
     return (
       <div className='flex layout vertical start-justified daemons-page'>
@@ -56,7 +94,7 @@ class Daemons extends React.Component {
           <Scrollbars autoHide className='flex-2 ui dimmable'>
             {isFetching && <Dimmer active><Loader size='large' content='Fetching'/></Dimmer>}
             <div className='flex layout horizontal center-center wrap daemons-list'>
-              {daemons.map(daemon => <DaemonCard daemon={daemon} site={sites[daemon.site]} key={daemon.id} />)}
+              {daemons.map(daemon => <DaemonCard socket={ws} daemon={daemon} site={sites[daemon.site]} key={daemon.id} />)}
             </div>
           </Scrollbars>
         </div>
@@ -72,6 +110,7 @@ Daemons.propTypes = {
   fetchSite: React.PropTypes.func.isRequired,
   fetchDaemons: React.PropTypes.func.isRequired,
   changeFilter: React.PropTypes.func,
+  receiveDaemonInfo: React.PropTypes.func
 };
 
 // Function to map state to container props
@@ -88,7 +127,8 @@ const mapDispatchToDaemonsProps = (dispatch) => {
   return {
     fetchSite: () => dispatch(SitesThunks.fetchIfNeeded()),
     fetchDaemons: () => dispatch(DaemonsThunks.fetchIfNeeded()),
-    changeFilter: (filterValue) => dispatch(DaemonsActions.changeFilter(filterValue))
+    changeFilter: (filterValue) => dispatch(DaemonsActions.changeFilter(filterValue)),
+    receiveDaemonInfo: (daemon, info) => dispatch(DaemonsActions.receiveDaemonInfo(daemon, info))
   };
 };
 

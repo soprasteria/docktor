@@ -60,6 +60,11 @@ func New(version string) {
 
 	engine.GET("/ping", pong)
 
+	ws := engine.Group("/ws")
+	{
+		ws.GET("/daemons", daemonsC.OpenWS, redisCache(redisClient))
+	}
+
 	authAPI := engine.Group("/auth")
 	{
 		authAPI.Use(docktorAPI) // Enrich echo context with connexion to Docktor mongo API

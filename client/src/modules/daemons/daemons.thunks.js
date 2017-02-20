@@ -5,25 +5,24 @@ import { generateEntitiesThunks } from '../utils/entities';
 
 // Daemons Actions
 import DaemonsActions from './daemons.actions';
+import DaemonsConstants from './daemons.constants';
 
 /********** Thunk Functions **********/
 
 // Thunk to fetch daemon info
-const fetchDaemonInfo = (daemon, force) => {
+const fetchDaemonInfo = (websocket, daemon, force) => {
   return function (dispatch) {
-
     dispatch(DaemonsActions.requestDaemonInfo(daemon));
-    let url = `/api/daemons/${daemon.id}/info`;
-    url = force ? url + '?force=true' : url;
-    return fetch(url, withAuth({ method:'GET' }))
-      .then(checkHttpStatus)
-      .then(parseJSON)
-      .then(response => {
-        dispatch(DaemonsActions.receiveDaemonInfo(daemon, response));
-      })
-      .catch(error => {
-        handleError(error, DaemonsActions.invalidRequestDaemonInfo(daemon), dispatch);
-      });
+    websocket.send(JSON.stringify({
+      'action': DaemonsConstants.REQUEST_DAEMON_INFO,
+      'data': {
+        'daemon': daemon,
+        'force': force
+      }
+    }));
+
+    // Result is handled by websocket itselve, one time.
+
   };
 };
 

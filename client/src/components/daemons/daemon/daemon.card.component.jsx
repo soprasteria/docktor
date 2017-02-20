@@ -15,9 +15,9 @@ import './daemon.card.component.scss';
 class DaemonCard extends React.Component {
 
   componentWillMount = () => {
-    const daemon = this.props.daemon;
-    if (daemon.active) {
-      this.props.fetchInfo(daemon, false);
+    const { daemon, socket } = this.props;
+    if (daemon.active && socket.readyState === WebSocket.OPEN) {
+      this.props.fetchInfo(socket, daemon, false);
     }
   }
 
@@ -43,7 +43,7 @@ class DaemonCard extends React.Component {
   }
 
   renderButtons = (nbImages, nbContainers) => {
-    const { daemon, fetchInfo } = this.props;
+    const { daemon, fetchInfo, socket } = this.props;
     const { isFetching } = daemon;
 
     const images = nbImages > 0 ? nbImages + (nbImages > 1 ? ' images' : ' image') : 'No images';
@@ -69,7 +69,7 @@ class DaemonCard extends React.Component {
       <Button.Group attached='bottom' size='mini' color='blue'>
         <Button disabled>{images}</Button>
         <Button disabled>{containers}</Button>
-        <Button disabled={!daemon.active} icon='refresh' onClick={() => fetchInfo(daemon, true)}/>
+        <Button disabled={!daemon.active} icon='refresh' onClick={() => fetchInfo(socket, daemon, true)}/>
       </Button.Group>
     );
   }
@@ -108,13 +108,14 @@ class DaemonCard extends React.Component {
 DaemonCard.propTypes = {
   daemon: React.PropTypes.object,
   site: React.PropTypes.object,
-  fetchInfo: React.PropTypes.func
+  fetchInfo: React.PropTypes.func,
+  socket: React.PropTypes.object
 };
 
 // Function to map dispatch to container props
 const mapDispatchToProps = (dispatch) => {
   return {
-    fetchInfo: (daemon, force) => dispatch(DaemonsThunks.fetchDaemonInfo(daemon, force))
+    fetchInfo: (socket, daemon, force) => dispatch(DaemonsThunks.fetchDaemonInfo(socket, daemon, force))
   };
 };
 
