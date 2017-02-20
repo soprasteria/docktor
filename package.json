@@ -67,7 +67,7 @@
     "source-map-loader": "^0.1.5",
     "style-loader": "^0.13.1",
     "webpack": "^1.14.0",
-    "webpack-dev-server": "^1.16.3"
+    "webpack-dev-server": "^2.4.0"
   },
   "dependencies": {
     "classnames": "^2.2.5",
