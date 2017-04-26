@@ -62,8 +62,8 @@ class GroupViewComponent extends React.Component {
 
   getMembersEmail = (members, users) => {
     return members.map(member => users[member.user])
-                  .filter(member => Boolean(member))
-                  .map(member => member.email);
+      .filter(member => Boolean(member))
+      .map(member => member.email);
   }
 
   // Render the members of the group

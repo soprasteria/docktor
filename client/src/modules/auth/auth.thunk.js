@@ -13,25 +13,36 @@ const switchForm = () => {
   };
 };
 
+// Generic function which returns a string of multiple associations of key=$result[key]
+const objectToQueryString = (obj) => {
+  return Object.keys(obj)
+    .map(k => `${window.encodeURIComponent(k)}=${window.encodeURIComponent(obj[k])}`)
+    .join('&');
+};
+
+const encodeInfos = (infos) => {
+  return {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: objectToQueryString(infos)
+  };
+};
+
 // Calls the API to get a token and
 // dispatches actions along the way
 const loginUser = (creds) => {
 
-  let config = {
-    method: 'POST',
-    headers: { 'Content-Type':'application/x-www-form-urlencoded' },
-    body: `username=${creds.username}&password=${creds.password}`
-  };
+  let config = encodeInfos(creds);
 
   return dispatch => {
     // We dispatch requestLogin to kickoff the call to the API
     dispatch(AuthActions.requestLogin());
 
     return fetch('/auth/login', config)
-      .then (checkHttpStatus)
+      .then(checkHttpStatus)
       .then(parseJSON)
-      .then((user) =>  {
-          // When uer is authorized, add the JWT token in the localstorage for authentication purpose
+      .then((user) => {
+        // When user is authorized, add the JWT token in the localstorage for authentication purpose
         localStorage.setItem('id_token', user.id_token);
         dispatch(AuthActions.receiveLogin(user));
       }).catch(error => {
@@ -39,15 +50,7 @@ const loginUser = (creds) => {
         // Dispatch differents actions wether the user is not authorized
         // or if the server encounters any other error
         if (error.response) {
-          error.response.text().then(text => {
-            if (error.response.status == 403) {
-              // Whill print a simple error message
-              dispatch(AuthActions.loginNotAuthorized(text));
-            } else {
-              // Will open an error toast
-              dispatch(AuthActions.loginInvalidRequest(text));
-            }
-          });
+          handleError(error, AuthActions.loginInvalidRequest, dispatch);
         } else {
           dispatch(AuthActions.loginInvalidRequest(error.message));
         }
@@ -69,7 +72,7 @@ const profile = () => {
   return dispatch => {
     dispatch(AuthActions.requestProfile());
 
-    return fetch('/api/profile', withAuth({ method:'GET' }))
+    return fetch('/api/profile', withAuth({ method: 'GET' }))
       .then(checkHttpStatus)
       .then(parseJSON)
       .then(response => {
@@ -84,11 +87,7 @@ const profile = () => {
 // Register the user to the application
 const registerUser = (account) => {
 
-  let config = {
-    method: 'POST',
-    headers: { 'Content-Type':'application/x-www-form-urlencoded' },
-    body: `username=${account.username}&password=${account.password}&email=${account.email}&firstname=${account.firstname}&lastname=${account.lastname}`
-  };
+  let config = encodeInfos(account);
 
   return dispatch => {
     // We dispatch requestLogin to kickoff the call to the API
@@ -97,8 +96,8 @@ const registerUser = (account) => {
     return fetch('/auth/register', config)
       .then(checkHttpStatus)
       .then(parseJSON)
-      .then((user) =>  {
-          // When uer is authorized
+      .then((user) => {
+        // When user is authorized
         localStorage.setItem('id_token', user.id_token);
         dispatch(AuthActions.receiveRegister(user));
       }).catch(error => {
@@ -162,11 +161,7 @@ const changePassword = (account) => {
 // Reset the password of user.
 const resetPassword = (username) => {
 
-  let config = {
-    method: 'POST',
-    headers: { 'Content-Type':'application/x-www-form-urlencoded' },
-    body: `username=${username}`
-  };
+  let config = encodeInfos({ username: username });
 
   return dispatch => {
     dispatch(AuthActions.requestResetPassword());
@@ -174,16 +169,16 @@ const resetPassword = (username) => {
     return fetch('/auth/reset_password', config)
       .then(checkHttpStatus)
       .then(parseJSON)
-      .then(() =>  {
+      .then(() => {
         dispatch(AuthActions.receiveResetPassword());
       }).catch(error => {
         if (error.response) {
           error.response.text().then(text => {
             if (error.response.status == 403) {
-              // Whill print a simple error message
+                            // Whill print a simple error message
               dispatch(AuthActions.resetPasswordNotAuthorized(text));
             } else {
-              // Will open an error toast
+                            // Will open an error toast
               dispatch(AuthActions.resetPasswordInvalidRequest(text));
             }
           });
@@ -198,35 +193,31 @@ const resetPassword = (username) => {
 // The user is automatically connected after setting a new password
 const changePasswordAfterReset = (newPassword, token) => {
 
-  let config = {
-    method: 'POST',
-    headers: { 'Content-Type':'application/x-www-form-urlencoded' },
-    body: `newPassword=${newPassword}&token=${token}`
-  };
+  let config = encodeInfos({ newPassword: newPassword, token: token });
 
   return dispatch => {
-    // We are using same action as login, because it's almost the same functional behavior on the client.
-    // But instead of having user+password, you have password+token
+        // We are using same action as login, because it's almost the same functional behavior on the client.
+        // But instead of having user+password, you have password+token
     dispatch(AuthActions.requestLogin());
 
     return fetch('/auth/change_reset_password', config)
       .then(checkHttpStatus)
       .then(parseJSON)
-      .then((user) =>  {
-          // His password is now changed and he is automatically connected
+      .then((user) => {
+                // His password is now changed and he is automatically connected
         localStorage.setItem('id_token', user.id_token);
         dispatch(AuthActions.receiveLogin(user));
       }).catch(error => {
-        // When error happens.
-        // Dispatch differents actions wether the user is not authorized
-        // or if the server encounters any other error
+                // When error happens.
+                // Dispatch differents actions wether the user is not authorized
+                // or if the server encounters any other error
         if (error.response) {
           error.response.text().then(text => {
             if (error.response.status == 403) {
-              // Whill print a simple error message
+                            // Whill print a simple error message
               dispatch(AuthActions.loginNotAuthorized(text));
             } else {
-              // Will open an error toast
+                            // Will open an error toast
               dispatch(AuthActions.loginInvalidRequest(text));
             }
           });
@@ -245,5 +236,6 @@ export default {
   registerUser,
   changePassword,
   resetPassword,
-  changePasswordAfterReset
+  changePasswordAfterReset,
+  encodeInfos
 };

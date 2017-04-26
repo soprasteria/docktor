@@ -50,7 +50,7 @@ module.exports = {
     }
   },
   rules: {
-    "indent": [2, 2],
+    "indent": ["error", 2, { "MemberExpression": 1 }],
     "strict": [2, "never"],
     "quotes": [1, "single", { avoidEscape: true }],
     "semi": 1,
