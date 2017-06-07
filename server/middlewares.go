@@ -12,7 +12,6 @@ import (
 	"github.com/soprasteria/docktor/server/modules/auth"
 	"github.com/soprasteria/docktor/server/modules/users"
 	"github.com/soprasteria/docktor/server/types"
-	"github.com/spf13/viper"
 	"gopkg.in/mgo.v2/bson"
 	"gopkg.in/redis.v3"
 )
@@ -44,47 +43,21 @@ func docktorAPI(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func openLDAP(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		address := viper.GetString("ldap.address")
-		baseDN := viper.GetString("ldap.baseDN")
-		bindDN := viper.GetString("ldap.bindDN")
-		bindPassword := viper.GetString("ldap.bindPassword")
-		searchFilter := viper.GetString("ldap.searchFilter")
-		usernameAttribute := viper.GetString("ldap.attr.username")
-		firstnameAttribute := viper.GetString("ldap.attr.firstname")
-		lastnameAttribute := viper.GetString("ldap.attr.lastname")
-		realNameAttribute := viper.GetString("ldap.attr.realname")
-		emailAttribute := viper.GetString("ldap.attr.email")
+func openLDAP(conf *auth.LDAPConf) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if conf.LdapServer == "" {
+				// Don't use LDAP, no problem
+				log.Info("No LDAP configured")
+				return next(c)
+			}
 
-		if address == "" {
-			// Don't use LDAP, no problem
-			log.Debug("No LDAP configured")
+			// Enrich the echo context with LDAP configuration
+			log.Info("LDAP configured")
+			ldap := auth.NewLDAP(conf)
+			c.Set("ldap", ldap)
 			return next(c)
 		}
-
-		// Enrich the echo context with LDAP configuration
-		log.Debug("LDAP configured")
-
-		ldap := auth.NewLDAP(&auth.LDAPConf{
-			LdapServer:   address,
-			BaseDN:       baseDN,
-			BindDN:       bindDN,
-			BindPassword: bindPassword,
-			SearchFilter: searchFilter,
-			Attr: auth.Attributes{
-				Username:  usernameAttribute,
-				Firstname: firstnameAttribute,
-				Lastname:  lastnameAttribute,
-				Realname:  realNameAttribute,
-				Email:     emailAttribute,
-			},
-		})
-
-		c.Set("ldap", ldap)
-
-		return next(c)
-
 	}
 }
 

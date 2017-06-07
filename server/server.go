@@ -23,11 +23,29 @@ type JSON map[string]interface{}
 
 //New instane of the server
 func New() {
+
+	ldapConf := &auth.LDAPConf{
+		LdapServer:   viper.GetString("ldap.address"),
+		BaseDN:       viper.GetString("ldap.baseDN"),
+		BindDN:       viper.GetString("ldap.bindDN"),
+		BindPassword: viper.GetString("ldap.bindPassword"),
+		SearchFilter: viper.GetString("ldap.searchFilter"),
+		Attr: auth.Attributes{
+			Username:  viper.GetString("ldap.attr.username"),
+			Firstname: viper.GetString("ldap.attr.firstname"),
+			Lastname:  viper.GetString("ldap.attr.lastname"),
+			Realname:  viper.GetString("ldap.attr.realname"),
+			Email:     viper.GetString("ldap.attr.email"),
+		},
+	}
+	ldapMiddleware := openLDAP(ldapConf)
+
 	redisClient := redis.NewClient(&redis.Options{
 		Addr:     viper.GetString("server.redis.addr"),
 		Password: viper.GetString("server.redis.password"), // no password set
 		DB:       0,                                        // use default DB
 	})
+	redisMiddleware := redisCache(redisClient)
 
 	engine := echo.New()
 	sitesC := controllers.Sites{}
@@ -49,7 +67,7 @@ func New() {
 	{
 		authAPI.Use(docktorAPI) // Enrich echo context with connexion to Docktor mongo API
 		if viper.GetString("ldap.address") != "" {
-			authAPI.Use(openLDAP)
+			authAPI.Use(ldapMiddleware)
 		}
 		authAPI.POST("/login", authC.Login)
 		authAPI.POST("/register", authC.Register)
@@ -105,7 +123,7 @@ func New() {
 				daemonAPI.GET("", daemonsC.Get, hasRole(types.SupervisorRole), daemons.RetrieveDaemon)
 				daemonAPI.DELETE("", daemonsC.Delete, hasRole(types.AdminRole))
 				daemonAPI.PUT("", daemonsC.Save, hasRole(types.AdminRole))
-				daemonAPI.GET("/info", daemonsC.GetInfo, hasRole(types.SupervisorRole), redisCache(redisClient), daemons.RetrieveDaemon)
+				daemonAPI.GET("/info", daemonsC.GetInfo, hasRole(types.SupervisorRole), redisMiddleware, daemons.RetrieveDaemon)
 			}
 		}
 
