@@ -7,6 +7,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
+	"github.com/soprasteria/docktor/server/adapters/ldap"
 	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/auth"
 	"github.com/soprasteria/docktor/server/modules/users"
@@ -35,7 +36,7 @@ func (u *Users) Update(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
 	authenticatedUser, err := u.getUserFromToken(c)
 	if err != nil {
-		return c.String(http.StatusUnauthorized, auth.ErrInvalidCredentials.Error())
+		return c.String(http.StatusUnauthorized, ldap.ErrInvalidCredentials.Error())
 	}
 
 	// Get User from body
@@ -94,7 +95,7 @@ func (u *Users) Delete(c echo.Context) error {
 
 	authenticatedUser, err := u.getUserFromToken(c)
 	if err != nil {
-		return c.String(http.StatusForbidden, auth.ErrInvalidCredentials.Error())
+		return c.String(http.StatusForbidden, ldap.ErrInvalidCredentials.Error())
 	}
 
 	if authenticatedUser.ID != id && !authenticatedUser.IsAdmin() {
@@ -135,7 +136,7 @@ func (u *Users) ChangePassword(c echo.Context) error {
 
 	authenticatedUser, err := u.getUserFromToken(c)
 	if err != nil {
-		return c.String(http.StatusForbidden, auth.ErrInvalidCredentials.Error())
+		return c.String(http.StatusForbidden, ldap.ErrInvalidCredentials.Error())
 	}
 
 	id := c.Param("id")
@@ -165,7 +166,7 @@ func (u *Users) ChangePassword(c echo.Context) error {
 func (u *Users) Profile(c echo.Context) error {
 	user, err := u.getUserFromToken(c)
 	if err != nil {
-		return c.String(http.StatusUnauthorized, auth.ErrInvalidCredentials.Error())
+		return c.String(http.StatusUnauthorized, ldap.ErrInvalidCredentials.Error())
 	}
 
 	return c.JSON(http.StatusOK, user)

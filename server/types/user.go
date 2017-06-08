@@ -33,6 +33,15 @@ const (
 	LocalProvider Provider = "local"
 )
 
+// UserQuery is used in queries
+type UserQuery struct {
+	Username  string
+	Password  string
+	Firstname string
+	Lastname  string
+	Email     string
+}
+
 // User model
 type User struct {
 	ID          bson.ObjectId   `bson:"_id,omitempty" json:"id,omitempty"`

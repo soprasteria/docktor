@@ -8,6 +8,7 @@ import (
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
+	"github.com/soprasteria/docktor/server/adapters/ldap"
 	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/auth"
 	"github.com/soprasteria/docktor/server/modules/users"
@@ -43,7 +44,7 @@ func docktorAPI(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func openLDAP(conf *auth.LDAPConf) echo.MiddlewareFunc {
+func openLDAP(conf *ldap.Config) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			if conf.LdapServer == "" {
@@ -54,7 +55,7 @@ func openLDAP(conf *auth.LDAPConf) echo.MiddlewareFunc {
 
 			// Enrich the echo context with LDAP configuration
 			log.Info("LDAP configured")
-			ldap := auth.NewLDAP(conf)
+			ldap := ldap.NewClient(conf)
 			c.Set("ldap", ldap)
 			return next(c)
 		}

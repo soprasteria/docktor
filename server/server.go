@@ -8,6 +8,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/soprasteria/docktor/server/adapters/ldap"
 	"github.com/soprasteria/docktor/server/controllers"
 	"github.com/soprasteria/docktor/server/modules/auth"
 	"github.com/soprasteria/docktor/server/modules/daemons"
@@ -24,13 +25,13 @@ type JSON map[string]interface{}
 //New instane of the server
 func New() {
 
-	ldapConf := &auth.LDAPConf{
+	ldapConf := &ldap.Config{
 		LdapServer:   viper.GetString("ldap.address"),
 		BaseDN:       viper.GetString("ldap.baseDN"),
 		BindDN:       viper.GetString("ldap.bindDN"),
 		BindPassword: viper.GetString("ldap.bindPassword"),
 		SearchFilter: viper.GetString("ldap.searchFilter"),
-		Attr: auth.Attributes{
+		Attr: ldap.Attributes{
 			Username:  viper.GetString("ldap.attr.username"),
 			Firstname: viper.GetString("ldap.attr.firstname"),
 			Lastname:  viper.GetString("ldap.attr.lastname"),
