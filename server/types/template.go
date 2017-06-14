@@ -11,7 +11,7 @@ type Template struct {
 	ID          bson.ObjectId   `bson:"_id,omitempty" json:"id,omitempty"`
 	Name        string          `bson:"name" json:"name"`
 	Description string          `bson:"description" json:"description"`
-	Services    []Service       `bson:"services" json:"services"`
+	Services    []bson.ObjectId `bson:"services" json:"services"`
 	Tags        []bson.ObjectId `bson:"tags" json:"tags"`
 	Created     time.Time       `bson:"created" json:"created"`
 	Updated     time.Time       `bson:"updated" json:"updated"`
