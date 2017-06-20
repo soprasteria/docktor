@@ -8,6 +8,7 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/soprasteria/docktor/server/adapters/cache"
 	"github.com/soprasteria/docktor/server/adapters/ldap"
 	"github.com/soprasteria/docktor/server/controllers"
 	"github.com/soprasteria/docktor/server/modules/auth"
@@ -46,7 +47,8 @@ func New() {
 		Password: viper.GetString("server.redis.password"), // no password set
 		DB:       0,                                        // use default DB
 	})
-	redisMiddleware := redisCache(redisClient)
+	cache := cache.NewRedis(redisClient)
+	redisMiddleware := redisCache(cache)
 
 	engine := echo.New()
 	sitesC := controllers.Sites{}

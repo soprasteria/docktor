@@ -261,10 +261,16 @@ func (a *Authentication) authenticateWhenUserFound(docktorUser types.User, query
 	if docktorUser.Provider == "LDAP" {
 		// User is from LDAP
 		if a.LDAP != nil {
-			ldapUser, err := a.LDAP.Login(query)
+			err := a.LDAP.Login(query)
 			if err != nil {
 				log.WithError(err).WithField("username", docktorUser.Username).Error("LDAP authentication failed")
 				return ldap.ErrInvalidCredentials
+			}
+
+			ldapUser, err := a.LDAP.Search(query.Username)
+			if err != nil {
+				log.WithError(err).WithField("username", docktorUser.Username).Error("LDAP search failed")
+				return ldap.ErrSearchFailed
 			}
 
 			docktorUser.Updated = time.Now()
@@ -298,9 +304,14 @@ func (a *Authentication) authenticateWhenUserFound(docktorUser types.User, query
 func (a *Authentication) authenticateWhenUserNotFound(query types.UserQuery) error {
 	if a.LDAP != nil {
 		// Authenticating with LDAP
-		ldapUser, err := a.LDAP.Login(query)
+		err := a.LDAP.Login(query)
 		if err != nil {
 			return ldap.ErrInvalidCredentials
+		}
+
+		ldapUser, err := a.LDAP.Search(query.Username)
+		if err != nil {
+			return ldap.ErrSearchFailed
 		}
 
 		docktorUser := types.User{

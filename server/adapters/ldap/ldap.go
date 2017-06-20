@@ -1,6 +1,7 @@
 package ldap
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"strings"
@@ -11,21 +12,29 @@ import (
 	"github.com/soprasteria/docktor/server/types"
 )
 
-// ErrInvalidCredentials is an error message when credentials are invalid
+// ErrInvalidCredentials is an error message  which appears when credentials are invalid
 var ErrInvalidCredentials = errors.New("Invalid Username or Password")
+
+// ErrSearchFailed is an error message which appears when search for user fail
+var ErrSearchFailed = errors.New("Search for user failed")
 
 // Client interface for LDAP
 type Client interface {
+	Open() error
 	Search(username string) (*UserInfo, error)
-	Login(query types.UserQuery) (*UserInfo, error)
+	Login(query types.UserQuery) error
+	Close()
 }
 
 // Config contains data used to connect to a LDAP directory service
 type Config struct {
+	SSL          bool
+	TLS          tls.Config
 	LdapServer   string
 	BaseDN       string
 	BindDN       string
 	BindPassword string
+	SearchDN     string
 	SearchFilter string
 	Attr         Attributes
 }
@@ -52,6 +61,7 @@ type UserInfo struct {
 // DefaultClient is an DefaultClient entry point allowing authentication with a DefaultClient server
 type DefaultClient struct {
 	conf *Config
+	conn *ldapV2.Conn
 }
 
 //NewClient create a LDAP entrypoint
@@ -59,25 +69,48 @@ func NewClient(conf *Config) Client {
 	return &DefaultClient{conf: conf}
 }
 
+// Open LDAP connection
+func (dc *DefaultClient) Open() error {
+	var err error
+	if !dc.conf.SSL {
+		log.Info("connecting to insecured LDAP server")
+		dc.conn, err = ldapV2.Dial("tcp", dc.conf.LdapServer)
+		if err != nil {
+			log.WithError(err).Errorf("LDAP dialing failed at %v", dc.conf.LdapServer)
+			return err
+		}
+
+		// Reconnect with TLS
+		if dc.conf.TLS.InsecureSkipVerify {
+			err = dc.conn.StartTLS(&tls.Config{InsecureSkipVerify: true})
+			if err != nil {
+				log.WithError(err).Errorf("cannot start TLS at %s", dc.conf.LdapServer)
+				return err
+			}
+		}
+	} else {
+		log.Info("connecting to secured LDAP server")
+		dc.conn, err = ldapV2.DialTLS("tcp", dc.conf.LdapServer, &dc.conf.TLS)
+		if err != nil {
+			log.WithError(err).Errorf("LDAP TLS dialing failed at %v", dc.conf.LdapServer)
+			return err
+		}
+	}
+	return nil
+}
+
 // Search search existence of username in LDAP
 // Returns the info about the user if found, error otherwize
-func (a *DefaultClient) Search(username string) (*UserInfo, error) {
-	// Reach the ldap server
-	conn, err := ldapV2.Dial("tcp", a.conf.LdapServer)
-	if err != nil {
-		log.WithError(err).Error("LDAP dialing failed")
-		return nil, err
-	}
-	defer conn.Close()
+func (dc *DefaultClient) Search(username string) (*UserInfo, error) {
 
 	// perform initial authentication
-	if err := a.bind(conn, a.conf.BindDN, a.conf.BindPassword); err != nil {
+	if err := dc.bind(dc.conf.BindDN, dc.conf.BindPassword); err != nil {
 		log.WithError(err).Error("LDAP binding failed")
 		return nil, err
 	}
 
 	// find user entry & attributes
-	ldapUser, err := a.searchForUser(conn, username)
+	ldapUser, err := dc.searchForUser(username)
 	if err != nil {
 		log.WithError(err).WithField("username", username).Error("Error looking for user in AD")
 		return nil, err
@@ -87,42 +120,46 @@ func (a *DefaultClient) Search(username string) (*UserInfo, error) {
 }
 
 //Login log the user in
-func (a *DefaultClient) Login(query types.UserQuery) (*UserInfo, error) {
-	// Reach the ldap server
-	conn, err := ldapV2.Dial("tcp", a.conf.LdapServer)
-	if err != nil {
-		log.WithError(err).Error("LDAP dialing failed")
-		return nil, err
-	}
-	defer conn.Close()
+func (dc *DefaultClient) Login(query types.UserQuery) error {
 
-	// perform initial authentication
-	if err := a.bind(conn, a.conf.BindDN, a.conf.BindPassword); err != nil {
-		log.WithError(err).Error("LDAP binding failed")
-		return nil, err
-	}
+	username := query.Username
+	dn := dc.conf.SearchDN
 
-	// find user entry & attributes
-	ldapUser, err := a.searchForUser(conn, query.Username)
-	if err != nil {
-		log.WithError(err).WithField("username", query.Username).Error("Error looking for user in AD")
-		return nil, err
+	// perform initial authentication if needed
+	if dn == "" {
+		if err := dc.bind(dc.conf.BindDN, dc.conf.BindPassword); err != nil {
+			log.WithError(err).Error("LDAP binding failed")
+			return err
+		}
+		// find user entry & attributes
+		ldapUser, err := dc.searchForUser(username)
+		if err != nil {
+			log.WithError(err).WithField("username", username).Error("Error looking for user in AD")
+			return err
+		}
+		dn = ldapUser.DN
+	} else {
+		dn = fmt.Sprintf(dn, username)
+		dn = strings.Replace(dn, "{{.ldapBase}}", dc.conf.BaseDN, -1)
 	}
 
 	// Authenticate user with password
-	return ldapUser, a.bind(conn, ldapUser.DN, query.Password)
-
+	return dc.bind(dn, query.Password)
 }
 
 // bind creates the first connexion with readonly user
-func (a *DefaultClient) bind(conn *ldapV2.Conn, dn, password string) error {
+func (dc *DefaultClient) bind(dn, password string) error {
+
+	if dc.conn == nil {
+		return fmt.Errorf("LDAP connction is not open")
+	}
 
 	if dn == "" || password == "" {
 		return fmt.Errorf("Password or DN to bind is empty")
 	}
 
 	// LDAP Bind
-	if err := conn.Bind(dn, password); err != nil {
+	if err := dc.conn.Bind(dn, password); err != nil {
 		if ldapErr, ok := err.(*ldapV2.Error); ok {
 			if ldapErr.ResultCode == ldapV2.LDAPResultInvalidCredentials {
 				return ErrInvalidCredentials
@@ -135,26 +172,30 @@ func (a *DefaultClient) bind(conn *ldapV2.Conn, dn, password string) error {
 }
 
 // searchForUser search the user in LDAP
-func (a *DefaultClient) searchForUser(conn *ldapV2.Conn, username string) (*UserInfo, error) {
+func (dc *DefaultClient) searchForUser(username string) (*UserInfo, error) {
+	if dc.conn == nil {
+		return nil, fmt.Errorf("LDAP connection is not open")
+	}
+
 	var searchResult *ldapV2.SearchResult
 	var err error
 
 	searchReq := ldapV2.SearchRequest{
-		BaseDN:       a.conf.BaseDN,
+		BaseDN:       dc.conf.BaseDN,
 		Scope:        ldapV2.ScopeWholeSubtree,
 		DerefAliases: ldapV2.NeverDerefAliases,
 		Attributes: []string{
-			a.conf.Attr.Username,
-			a.conf.Attr.Firstname,
-			a.conf.Attr.Lastname,
-			a.conf.Attr.Realname,
-			a.conf.Attr.Email,
+			dc.conf.Attr.Username,
+			dc.conf.Attr.Firstname,
+			dc.conf.Attr.Lastname,
+			dc.conf.Attr.Realname,
+			dc.conf.Attr.Email,
 			"dn",
 		},
-		Filter: strings.Replace(a.conf.SearchFilter, "%s", ldapV2.EscapeFilter(username), -1),
+		Filter: strings.Replace(dc.conf.SearchFilter, "%s", ldapV2.EscapeFilter(username), -1),
 	}
 
-	searchResult, err = conn.Search(&searchReq)
+	searchResult, err = dc.conn.Search(&searchReq)
 	if err != nil {
 		return nil, err
 	}
@@ -167,21 +208,29 @@ func (a *DefaultClient) searchForUser(conn *ldapV2.Conn, username string) (*User
 		return nil, errors.New("Ldap search matched more than one entry, please review your filter setting")
 	}
 
+	getLdapAttr := func(name string, result *ldapV2.SearchResult) string {
+		for _, attr := range result.Entries[0].Attributes {
+			if attr.Name == name && len(attr.Values) > 0 {
+				return attr.Values[0]
+			}
+		}
+		return ""
+	}
+
 	return &UserInfo{
 		DN:        searchResult.Entries[0].DN,
-		Username:  getLdapAttr(a.conf.Attr.Username, searchResult),
-		FirstName: getLdapAttr(a.conf.Attr.Firstname, searchResult),
-		LastName:  getLdapAttr(a.conf.Attr.Lastname, searchResult),
-		RealName:  getLdapAttr(a.conf.Attr.Realname, searchResult),
-		Email:     getLdapAttr(a.conf.Attr.Email, searchResult),
+		Username:  getLdapAttr(dc.conf.Attr.Username, searchResult),
+		FirstName: getLdapAttr(dc.conf.Attr.Firstname, searchResult),
+		LastName:  getLdapAttr(dc.conf.Attr.Lastname, searchResult),
+		RealName:  getLdapAttr(dc.conf.Attr.Realname, searchResult),
+		Email:     getLdapAttr(dc.conf.Attr.Email, searchResult),
 	}, nil
 }
 
-func getLdapAttr(name string, result *ldapV2.SearchResult) string {
-	for _, attr := range result.Entries[0].Attributes {
-		if attr.Name == name && len(attr.Values) > 0 {
-			return attr.Values[0]
-		}
+// Close LDAP connection
+func (dc *DefaultClient) Close() {
+	if dc.conn != nil {
+		dc.conn.Close()
+		dc.conn = nil
 	}
-	return ""
 }

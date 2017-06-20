@@ -8,13 +8,13 @@ import (
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
+	"github.com/soprasteria/docktor/server/adapters/cache"
 	"github.com/soprasteria/docktor/server/adapters/ldap"
 	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/auth"
 	"github.com/soprasteria/docktor/server/modules/users"
 	"github.com/soprasteria/docktor/server/types"
 	"gopkg.in/mgo.v2/bson"
-	"gopkg.in/redis.v3"
 )
 
 // NotAuthorized is a template string used to report an unauthorized access to the API
@@ -23,10 +23,10 @@ var NotAuthorized = "API not authorized for user %q"
 // NotValidID is a template string used to report that the id is not valid (i.e. not a valid BSON ID)
 var NotValidID = "ID %q is not valid"
 
-func redisCache(client *redis.Client) echo.MiddlewareFunc {
+func redisCache(ca cache.Cache) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			c.Set("redis", client)
+			c.Set("cache", ca)
 			return next(c)
 		}
 	}
@@ -56,6 +56,10 @@ func openLDAP(conf *ldap.Config) echo.MiddlewareFunc {
 			// Enrich the echo context with LDAP configuration
 			log.Info("LDAP configured")
 			ldap := ldap.NewClient(conf)
+			if err := ldap.Open(); err != nil {
+				return c.String(http.StatusFailedDependency, err.Error())
+			}
+			defer ldap.Close()
 			c.Set("ldap", ldap)
 			return next(c)
 		}
