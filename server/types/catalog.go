@@ -26,6 +26,7 @@ type CatatalogTemplate struct {
 type CatalogService struct {
 	ID       bson.ObjectId                    `bson:"_id,omitempty" json:"id,omitempty"`
 	Name     string                           `bson:"name" json:"name"`
+	LogoPath string                           `bson:"logoPath" json:"logoPath"`
 	Versions map[string]CatalogServiceVersion `bson:"versions" json:"versions"`
 	Tags     []bson.ObjectId                  `bson:"tags" json:"tags"`
 	Created  time.Time                        `bson:"created" json:"created"`
