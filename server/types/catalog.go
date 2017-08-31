@@ -26,7 +26,7 @@ type CatatalogTemplate struct {
 	Updated         time.Time       `bson:"updated" json:"updated"`
 }
 
-// CatalogService defines a CDK service in a catalog, i.e. a service that can be deployed to a given machine
+// CatalogService defines a service in a catalog, i.e. a service that can be deployed to a given machine
 // A service contains many versions. Each version contains 1 or more containers to deploy
 // Containers of a service are bound together, meaning if the service is stopped, all containers are stopped
 // Jobs (checkhealth) or commands can be executed on containers
@@ -59,10 +59,11 @@ type CatalogServiceVersion struct {
 	Updated    time.Time          `bson:"updated" json:"updated"`
 }
 
-// CatalogContainer defines the
+// CatalogContainer defines a container configuration inside a given catalog service
+// It contains
 type CatalogContainer struct {
 	ID bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-	// A user-friendly name to distingish containers inside a service
+	// A user-friendly name to distingish deployed containers inside a deployed service
 	Name string `bson:"name" json:"name"`
 	// Image version like 'registryname/imagename:tag'
 	Image string `bson:"image" json:"image"`

@@ -57,14 +57,14 @@ type Service struct {
 	Name             string          `bson:"name" json:"name"`
 	Description      string          `bson:"description,omitempty" json:"description,omitempty"`
 	CatalogServiceID bson.ObjectId   `bson:"catalogServiceId" json:"catalogServiceId"`
-	version          string          `bson:"version" json:"version"`
+	Version          string          `bson:"version" json:"version"`
 	Tags             []bson.ObjectId `bson:"tags" json:"tags"`
 }
 
 // Services is a slice of multiple Service entities
 type Services []Service
 
-// Container is a container associated to the group
+// Container is a container that belongs to a service
 type Container struct {
 	ID bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
 	// Name of the container on the daemon
@@ -73,7 +73,7 @@ type Container struct {
 	Hostname string `bson:"hostname" json:"hostname"`
 	// Image identifies the version of the container
 	Image string `bson:"image" json:"image"`
-	// Name of the container type, from catalog
+	// User-friendly name of the container, provided from catalog container
 	CatalogContainerName string `bson:"catalogContainerName" json:"catalogContainerName"`
 	// Id of the container type, from catalog
 	CatalogContainerID bson.ObjectId `bson:"catalogContainerId" json:"catalogContainerId"`
