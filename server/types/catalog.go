@@ -6,17 +6,24 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+const (
+	// PrimaryContainerType is the type of container considered as the main container of a service (e.g. main application)
+	PrimaryContainerType ContainerType = "primary"
+	// SidekickContainerType is the type of container considered as a secondary container of a service (e.g. database of main application)
+	SidekickContainerType ContainerType = "sidekick"
+)
+
 // CatatalogTemplate is an archetype to bootstrap a set of services
 // These services are not bound together, meaning a service can later be deleted once instanciated
 // When instanciated, user will choose the version of each service in the template. By default, only last versions are selected.
 type CatatalogTemplate struct {
-	ID          bson.ObjectId   `bson:"_id,omitempty" json:"id,omitempty"`
-	Name        string          `bson:"name" json:"name"`
-	Description string          `bson:"description,omitempty" json:"description,omitempty"`
-	Services    []bson.ObjectId `bson:"services" json:"services"`
-	Tags        []bson.ObjectId `bson:"tags" json:"tags"`
-	Created     time.Time       `bson:"created" json:"created"`
-	Updated     time.Time       `bson:"updated" json:"updated"`
+	ID              bson.ObjectId   `bson:"_id,omitempty" json:"id,omitempty"`
+	Name            string          `bson:"name" json:"name"`
+	Description     string          `bson:"description,omitempty" json:"description,omitempty"`
+	CatalogServices []bson.ObjectId `bson:"catalogServices" json:"catalogServices"`
+	Tags            []bson.ObjectId `bson:"tags" json:"tags"`
+	Created         time.Time       `bson:"created" json:"created"`
+	Updated         time.Time       `bson:"updated" json:"updated"`
 }
 
 // CatalogService defines a CDK service in a catalog, i.e. a service that can be deployed to a given machine
@@ -54,14 +61,19 @@ type CatalogServiceVersion struct {
 
 // CatalogContainer defines the
 type CatalogContainer struct {
+	ID bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
+	// A user-friendly name to distingish containers inside a service
+	Name string `bson:"name" json:"name"`
 	// Image version like 'registryname/imagename:tag'
 	Image string `bson:"image" json:"image"`
+	// Type of container (primary or sidekick), default to primary
+	Type ContainerType `bson:"type" json:"type"`
 	// Available commands to execute inside container
 	Commands Commands `bson:"commands" json:"commands"`
 	// URls to reach the container
 	URLs URLs `bson:"urls" json:"urls"`
-	// Scheduled jobs for healthcheck
-	Jobs Jobs `bson:"jobs" json:"jobs"`
+	// Scheduled job for healthcheck
+	HealthCheck HealthCheck `bson:"healthCheck" json:"healthCheck"`
 	// Default variables for given container
 	Variables Variables `bson:"variables" json:"variables"`
 	// Default ports for given container
@@ -112,4 +124,66 @@ func (i CatalogContainer) IsIncludedInConf(b CatalogContainer) bool {
 		i.Ports.IsIncluded(b.Ports) &&
 		i.Variables.IsIncluded(b.Variables) &&
 		i.Volumes.IsIncluded(b.Volumes)
+}
+
+// ContainerType is the type of a container: 'primary' or 'sidekick'
+// This type is meant to change the way containers are highlighted in display
+type ContainerType string
+
+// Command is a shell command that you can run inside the container to do an action
+// This kind of command is meant to be launched by users/admin when needed
+type Command struct {
+	ID   bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
+	Name string        `bson:"name" json:"name"`
+	// Effective command to execute
+	Exec string `bson:"exec" json:"exec"`
+	// Arguments are parameters password to the command. By default, custom arguments are not authorized for a command
+	Arguments Arguments `bson:"arguments,omitempty" json:"arguments,omitempty"`
+	// Only members with one of these roles (or superadmin) can execute the command
+	Roles   MemberRole `bson:"role" json:"role"`
+	Created time.Time  `bson:"created" json:"created"`
+	Updated time.Time  `bson:"updated" json:"updated"`
+}
+
+// Arguments are parameters passed to the command
+// It's used to define arguments at runtime
+type Arguments struct {
+	// When true, arguments can be passed at runtime by user
+	Authorized bool `bson:"authorized" json:"authorized"`
+	// When not empty and Authorized is true, restrict the list of arguments that can used by user at runtime.
+	// When empty and Authorized is true, arguments are not restricted
+	RestrictedValues []string `bson:"restrictedValues,omitempty" json:"restrictedValues,omitempty"`
+}
+
+// URL for service
+type URL struct {
+	ID      bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
+	Label   string        `bson:"label" json:"label"`
+	URL     string        `bson:"url" json:"url"`
+	Created time.Time     `bson:"created" json:"created"`
+}
+
+// URLs is a slice of URL
+type URLs []URL
+
+// Commands is a slice of Command
+type Commands []Command
+
+// JobType is the type of the job, defining how status are fetch (with docker exec or via http call)
+type JobType string
+
+const (
+	// ExecJob is a type where status is fetched with a "Docker exec" on the container
+	ExecJob JobType = "exec"
+	// HTTPJob is a type where status is fetched with an HTTP call.
+	HTTPJob JobType = "url"
+)
+
+// HealthCheck for service
+type HealthCheck struct {
+	Value       string  `bson:"value" json:"value"`       // ":internalport" if type = url, "unix command" if type= exec
+	Interval    string  `bson:"interval" json:"interval"` // cron format
+	Type        JobType `bson:"type" json:"type"`
+	Description string  `bson:"description" json:"description"`
+	Active      bool    `bson:"active" json:"active"`
 }

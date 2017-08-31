@@ -37,3 +37,12 @@ func (d *Daemon) AddVariable(v Variable) {
 func (d *Daemon) AddVolume(v Volume) {
 	d.Volumes = append(d.Volumes, v)
 }
+
+// Site model
+type Site struct {
+	ID        bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
+	Created   time.Time     `bson:"created" json:"created"`
+	Title     string        `bson:"title" json:"title"`
+	Latitude  float64       `bson:"latitude" json:"latitude"`
+	Longitude float64       `bson:"longitude" json:"longitude"`
+}
