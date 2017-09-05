@@ -11,7 +11,7 @@ type Variable struct {
 	// For example: :
 	// - a Mongo connection uri : 'mongodb://${containers.mongo.name}:${containers.mongo.ports.external:27017}'
 	// - a generated string of length 10 (for password): '${genstring:10}'
-	GenPattern  string `bson:"autofill,omitempty" json:"autofill,omitempty"`
+	GenPattern  string `bson:"genPattern,omitempty" json:"genPattern,omitempty"`
 	Description string `bson:"description" json:"description"`
 }
 

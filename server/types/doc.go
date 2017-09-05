@@ -5,7 +5,7 @@ These entities are structures persited to database and exposed within a REST-lik
 Daemon and Site
 
 Docker is used in Docktor to deploy web tools automatically. A daemon defines an entrypoint to a Docker daemon. A site defines where the daemon is located for statistical purposes.
-This daemon can be opened or securized with TLS configuration.
+This daemon can be opened or secured with TLS configuration.
 
 User
 
@@ -31,8 +31,8 @@ For instance, the container for database of "SonarQube" service defines: the int
 
 Catalog Template
 
-A catalog template is an entity composed of multiple catalog services. Catalog services in a template are not hard bounded with each other. It's just a set of tools that can deployed together in a just one click. Once, the template is just a boostrap entity meant to deploy multiple services at once. The notion of template disappear once the services are deployed in a group.
-That's why templates are not versionned. Templates are refering the latest version of the services that are contained in it.
+A catalog template is an entity composed of multiple catalog services. Catalog services in a template are not hard bounded with each other. It's just a set of tools that can be deployed together in a just one click. Once, the template is just a boostrap entity meant to deploy multiple services at once. The notion of template disappear once the services are deployed in a group.
+That's why templates are not versionned. Templates are refering to the latest version of the services that are contained in it.
 
 For instance, a 'software factory' template could contains the catalog services "SonarQube", "Jenkins", "Gitlab" and so on. Once theses services are deployed, they are able to work independently.
 

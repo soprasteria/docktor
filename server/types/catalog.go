@@ -33,7 +33,6 @@ type CatatalogTemplate struct {
 type CatalogService struct {
 	ID       bson.ObjectId                    `bson:"_id,omitempty" json:"id,omitempty"`
 	Name     string                           `bson:"name" json:"name"`
-	LogoPath string                           `bson:"logoPath" json:"logoPath"`
 	Versions map[string]CatalogServiceVersion `bson:"versions" json:"versions"`
 	Tags     []bson.ObjectId                  `bson:"tags" json:"tags"`
 	Created  time.Time                        `bson:"created" json:"created"`
@@ -83,29 +82,34 @@ type CatalogContainer struct {
 	Volumes Volumes `bson:"volumes" json:"volumes"`
 	// Default parameters for given container
 	Parameters Parameters `bson:"parameters" json:"parameters"`
+	// Default args for given container
+	// Args can contain patterns to automatically fill the effective arguments like
+	// For example: :
+	// - Mongo connexion arguments : ['--auth', '${var1}']
+	Args Args `bson:"args" json:"args"`
 }
 
 // AddVariable adds a Variable to the Image
-func (i *CatalogContainer) AddVariable(v *Variable) *CatalogContainer {
-	i.Variables = append(i.Variables, *v)
+func (i *CatalogContainer) AddVariable(v Variable) *CatalogContainer {
+	i.Variables = append(i.Variables, v)
 	return i
 }
 
 // AddPort adds a Port to the Image
-func (i *CatalogContainer) AddPort(p *Port) *CatalogContainer {
-	i.Ports = append(i.Ports, *p)
+func (i *CatalogContainer) AddPort(p Port) *CatalogContainer {
+	i.Ports = append(i.Ports, p)
 	return i
 }
 
 // AddVolume adds a Volume to the Image
-func (i *CatalogContainer) AddVolume(v *Volume) *CatalogContainer {
-	i.Volumes = append(i.Volumes, *v)
+func (i *CatalogContainer) AddVolume(v Volume) *CatalogContainer {
+	i.Volumes = append(i.Volumes, v)
 	return i
 }
 
 // AddParameter adds a Parameter to the Image
-func (i *CatalogContainer) AddParameter(p *Parameter) *CatalogContainer {
-	i.Parameters = append(i.Parameters, *p)
+func (i *CatalogContainer) AddParameter(p Parameter) *CatalogContainer {
+	i.Parameters = append(i.Parameters, p)
 	return i
 }
 
@@ -134,21 +138,26 @@ type ContainerType string
 // Command is a shell command that you can run inside the container to do an action
 // This kind of command is meant to be launched by users/admin when needed
 type Command struct {
-	ID   bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-	Name string        `bson:"name" json:"name"`
+	Name string `bson:"name" json:"name"`
 	// Effective command to execute
 	Exec string `bson:"exec" json:"exec"`
 	// Arguments are parameters password to the command. By default, custom arguments are not authorized for a command
-	Arguments Arguments `bson:"arguments,omitempty" json:"arguments,omitempty"`
+	Arguments CommandArguments `bson:"arguments,omitempty" json:"arguments,omitempty"`
 	// Only members with one of these roles (or superadmin) can execute the command
 	Roles   MemberRole `bson:"role" json:"role"`
 	Created time.Time  `bson:"created" json:"created"`
 	Updated time.Time  `bson:"updated" json:"updated"`
 }
 
-// Arguments are parameters passed to the command
+// Commands is a slice of Command
+type Commands []Command
+
+// Args are arguments passed to a given container
+type Args []string
+
+// CommandArguments are parameters passed to a command
 // It's used to define arguments at runtime
-type Arguments struct {
+type CommandArguments struct {
 	// When true, arguments can be passed at runtime by user
 	Authorized bool `bson:"authorized" json:"authorized"`
 	// When not empty and Authorized is true, restrict the list of arguments that can used by user at runtime.
@@ -158,17 +167,13 @@ type Arguments struct {
 
 // URL for service
 type URL struct {
-	ID      bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-	Label   string        `bson:"label" json:"label"`
-	URL     string        `bson:"url" json:"url"`
-	Created time.Time     `bson:"created" json:"created"`
+	Label   string    `bson:"label" json:"label"`
+	URL     string    `bson:"url" json:"url"`
+	Created time.Time `bson:"created" json:"created"`
 }
 
 // URLs is a slice of URL
 type URLs []URL
-
-// Commands is a slice of Command
-type Commands []Command
 
 // JobType is the type of the job, defining how status are fetch (with docker exec or via http call)
 type JobType string

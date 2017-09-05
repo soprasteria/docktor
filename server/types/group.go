@@ -22,13 +22,14 @@ const (
 // Group is a entity (like a project) that gather services instances as containers
 type Group struct {
 	ID          bson.ObjectId   `bson:"_id,omitempty" json:"id,omitempty"`
-	Created     time.Time       `bson:"created" json:"created"`
 	Title       string          `bson:"title" json:"title"`
 	Description string          `bson:"description" json:"description"`
 	FileSystems FileSystems     `bson:"filesystems" json:"filesystems"`
 	Services    Services        `bson:"services" json:"services"`
 	Members     Members         `bson:"members" json:"members"`
 	Tags        []bson.ObjectId `bson:"tags" json:"tags"`
+	Created     time.Time       `bson:"created" json:"created"`
+	Updated     time.Time       `bson:"updated" json:"updated"`
 }
 
 // NewGroup creates new group for another one.
@@ -59,6 +60,8 @@ type Service struct {
 	CatalogServiceID bson.ObjectId   `bson:"catalogServiceId" json:"catalogServiceId"`
 	Version          string          `bson:"version" json:"version"`
 	Tags             []bson.ObjectId `bson:"tags" json:"tags"`
+	Created          time.Time       `bson:"created" json:"created"`
+	Updated          time.Time       `bson:"updated" json:"updated"`
 }
 
 // Services is a slice of multiple Service entities
@@ -87,11 +90,15 @@ type Container struct {
 	Variables Variables `bson:"variables" json:"variables"`
 	// Actual volumes mapped on the deployed container
 	Volumes Volumes `bson:"volumes" json:"volumes"`
+	// Actual args on the deployed container
+	Args Args `bson:"args" json:"args"`
 	// Results of healthcheck jobs executed on this kind of containers
 	HealthCheck HealthCheckResults `bson:"healthCheck" json:"healthCheck"`
 	// Id of the daemon where this container is deployed
 	DaemonID bson.ObjectId   `bson:"daemonId,omitempty" json:"daemonId,omitempty"`
 	Tags     []bson.ObjectId `bson:"tags" json:"tags"`
+	Created  time.Time       `bson:"created" json:"created"`
+	Updated  time.Time       `bson:"updated" json:"updated"`
 }
 
 // Containers is a slice of Container
@@ -171,15 +178,3 @@ type FileSystem struct {
 
 //FileSystems is a slice of FileSystem
 type FileSystems []FileSystem
-
-// ContainerWithGroup is a entity which contains a container, linked to a group
-type ContainerWithGroup struct {
-	Group     Group
-	Container Container
-}
-
-// ContainerWithGroupID is an entity which contains a container, linked to a group ID
-type ContainerWithGroupID struct {
-	Container Container     `bson:"container" json:"container"`
-	ID        bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-}
