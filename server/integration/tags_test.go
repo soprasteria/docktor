@@ -13,8 +13,7 @@ import (
 )
 
 const (
-	dockerHost  = "unix:///var/run/docker.sock"
-	docktorHost = "mongodb://localhost:%v/docktor"
+	dockerHost = "unix:///var/run/docker.sock"
 )
 
 var (
@@ -23,8 +22,8 @@ var (
 
 func TestServer(t *testing.T) {
 
-	log.Info("Instanciate docktor mongoDB")
-	// Instanciate mongoDB
+	log.Info("Instantiate docktor mongoDB")
+	// Instantiate mongoDB
 	docker, err := dockerapi.NewClient(dockerHost)
 	Convey("When a new client is created", t, func() {
 		Convey("Then no error shoud be returned", func() {
@@ -70,8 +69,8 @@ func TestServer(t *testing.T) {
 	serverStarted := false
 	count := 0
 	for !serverStarted {
-		time.Sleep(10 * time.Millisecond)
-		count += 10
+		time.Sleep(100 * time.Millisecond)
+		count += 100
 		log.Println("Checking if docktor server is started...")
 		resp, err := http.Get("http://localhost:8080/ping")
 		if err != nil {
