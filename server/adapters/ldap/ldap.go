@@ -8,7 +8,7 @@ import (
 
 	ldapV2 "gopkg.in/ldap.v2"
 
-	log "github.com/Sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
 	"github.com/soprasteria/docktor/server/types"
 )
 
