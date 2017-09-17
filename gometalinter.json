@@ -3,5 +3,6 @@
     "gotype",
     "gas"
   ],
-  "Test": true
+  "Test": true,
+  "Exclude": ["mock_"]
 }
