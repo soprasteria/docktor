@@ -284,7 +284,7 @@
 			"revisionTime": "2017-09-01T22:45:32Z"
 		},
 		{
-			"checksumSHA1": "LH5HB7YeZLHCjEDyQEvZkXFQoSY=",
+			"checksumSHA1": "apU7imWTY3Gc3mhdxdWi1FfNM7s=",
 			"path": "github.com/docker/docker/pkg/archive",
 			"revision": "9b4a616e4b3819ef062780b5fd854616be2c22bb",
 			"revisionTime": "2017-09-01T22:45:32Z"
@@ -932,13 +932,13 @@
 			"revisionTime": "2016-09-14T00:11:54Z"
 		},
 		{
-			"checksumSHA1": "z79z5msRzgU48FCZxSuxfU8b4rs=",
+			"checksumSHA1": "00eQaGynDYrv3tL+C7l9xH0IDZg=",
 			"path": "golang.org/x/net/html/atom",
 			"revision": "66aacef3dd8a676686c7ae3716979581e8b03c47",
 			"revisionTime": "2016-09-14T00:11:54Z"
 		},
 		{
-			"checksumSHA1": "6Yh/sh2D/OyNxKqPVs8alWUhTms=",
+			"checksumSHA1": "w70GrQt8nhjc6j0i3rEZjWuSpKY=",
 			"path": "golang.org/x/sys/unix",
 			"revision": "7ddbeae9ae08c6a06a59597f0c9edbc5ff2444ce",
 			"revisionTime": "2017-09-01T16:16:44Z"
@@ -956,7 +956,7 @@
 			"revisionTime": "2017-08-31T17:01:58Z"
 		},
 		{
-			"checksumSHA1": "kKylzIrLEnH8NKyeVAL0dq5gjVQ=",
+			"checksumSHA1": "Anof4bt0AU+Sa3R8Rq0KBnlpbaQ=",
 			"path": "golang.org/x/text/unicode/norm",
 			"revision": "bd91bbf73e9a4a801adbfb97133c992678533126",
 			"revisionTime": "2017-08-31T17:01:58Z"
