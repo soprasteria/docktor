@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo"
+	"github.com/soprasteria/docktor/server/adapters/cache"
 	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/daemons"
 	"github.com/soprasteria/docktor/server/types"
-	"github.com/soprasteria/docktor/server/utils"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -18,7 +18,7 @@ type Daemons struct {
 
 //GetAll daemons from docktor
 func (d *Daemons) GetAll(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	daemons, err := docktorAPI.Daemons().FindAll()
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Error while retreiving all daemons")
@@ -28,7 +28,7 @@ func (d *Daemons) GetAll(c echo.Context) error {
 
 //Save daemon into docktor
 func (d *Daemons) Save(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	var daemon types.Daemon
 	err := c.Bind(&daemon)
 
@@ -50,7 +50,7 @@ func (d *Daemons) Save(c echo.Context) error {
 
 //Delete daemon into docktor
 func (d *Daemons) Delete(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	id := c.Param("daemonID")
 	res, err := docktorAPI.Daemons().Delete(bson.ObjectIdHex(id))
 	if err != nil {
@@ -69,9 +69,12 @@ func (d *Daemons) Get(c echo.Context) error {
 func (d *Daemons) GetInfo(c echo.Context) error {
 	daemon := c.Get("daemon").(types.Daemon)
 	forceParam := c.QueryParam("force")
-	redisClient := utils.GetRedis(c)
+	cache, ok := c.Get("cache").(cache.Cache)
+	if !ok {
+		return c.String(http.StatusInternalServerError, "cache not provided")
+	}
 
-	infos, err := daemons.GetInfo(daemon, redisClient, forceParam == "true")
+	infos, err := daemons.GetInfo(daemon, cache, forceParam == "true")
 	if err != nil {
 		return c.String(http.StatusBadRequest, err.Error())
 	}

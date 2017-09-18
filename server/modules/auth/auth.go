@@ -7,6 +7,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
+	"github.com/soprasteria/docktor/server/adapters/ldap"
 	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/types"
 	"github.com/spf13/viper"
@@ -20,8 +21,7 @@ const (
 )
 
 var (
-	// ErrInvalidCredentials is an error message when credentials are invalid
-	ErrInvalidCredentials = errors.New("Invalid Username or Password")
+
 	// ErrUsernameAlreadyTaken is an error message when the username is already used by someone else
 	ErrUsernameAlreadyTaken = errors.New("Username already taken")
 	// ErrUsernameAlreadyTakenOnLDAP is an error message when the username is already used by someone else on LDAP
@@ -34,23 +34,8 @@ var (
 
 // Authentication contains all APIs entrypoints needed for authentication
 type Authentication struct {
-	Docktor *models.Docktor
-	LDAP    *LDAP
-}
-
-// LoginUserQuery represents connection data
-type LoginUserQuery struct {
-	Username string
-	Password string
-}
-
-// RegisterUserQuery represent connection data needed to register user
-type RegisterUserQuery struct {
-	Username  string
-	Password  string
-	Firstname string
-	Lastname  string
-	Email     string
+	Docktor models.DocktorAPI
+	LDAP    ldap.Client
 }
 
 // MyCustomClaims contains data that will be signed in the JWT token
@@ -98,7 +83,7 @@ func (a *Authentication) ChangePassword(id, oldPassword, newPassword string) err
 
 // RegisterUser registers the user in the application
 // Can't register if user already exists (in Docktor or LDAP)
-func (a *Authentication) RegisterUser(query *RegisterUserQuery) error {
+func (a *Authentication) RegisterUser(query types.UserQuery) error {
 	// First search on Docktor
 	_, err := a.Docktor.Users().Find(query.Username)
 	if err == nil {
@@ -257,7 +242,7 @@ func (a *Authentication) ChangeResetPasswordUser(token, newPassword string) (typ
 }
 
 // AuthenticateUser authenticates a user
-func (a *Authentication) AuthenticateUser(query *LoginUserQuery) error {
+func (a *Authentication) AuthenticateUser(query types.UserQuery) error {
 
 	user, err := a.Docktor.Users().Find(query.Username)
 	if err != nil || user.ID.Hex() == "" {
@@ -268,7 +253,7 @@ func (a *Authentication) AuthenticateUser(query *LoginUserQuery) error {
 	return a.authenticateWhenUserFound(user, query)
 }
 
-func (a *Authentication) authenticateWhenUserFound(docktorUser types.User, query *LoginUserQuery) error {
+func (a *Authentication) authenticateWhenUserFound(docktorUser types.User, query types.UserQuery) error {
 	log.WithFields(log.Fields{
 		"provider": docktorUser.Provider,
 		"username": query.Username,
@@ -276,10 +261,16 @@ func (a *Authentication) authenticateWhenUserFound(docktorUser types.User, query
 	if docktorUser.Provider == "LDAP" {
 		// User is from LDAP
 		if a.LDAP != nil {
-			ldapUser, err := a.LDAP.Login(query)
+			err := a.LDAP.Login(query)
 			if err != nil {
 				log.WithError(err).WithField("username", docktorUser.Username).Error("LDAP authentication failed")
-				return ErrInvalidCredentials
+				return ldap.ErrInvalidCredentials
+			}
+
+			ldapUser, err := a.LDAP.Search(query.Username)
+			if err != nil {
+				log.WithError(err).WithField("username", docktorUser.Username).Error("LDAP search failed")
+				return ldap.ErrSearchFailed
 			}
 
 			docktorUser.Updated = time.Now()
@@ -307,15 +298,20 @@ func (a *Authentication) authenticateWhenUserFound(docktorUser types.User, query
 		}
 	}
 
-	return ErrInvalidCredentials
+	return ldap.ErrInvalidCredentials
 }
 
-func (a *Authentication) authenticateWhenUserNotFound(query *LoginUserQuery) error {
+func (a *Authentication) authenticateWhenUserNotFound(query types.UserQuery) error {
 	if a.LDAP != nil {
 		// Authenticating with LDAP
-		ldapUser, err := a.LDAP.Login(query)
+		err := a.LDAP.Login(query)
 		if err != nil {
-			return ErrInvalidCredentials
+			return ldap.ErrInvalidCredentials
+		}
+
+		ldapUser, err := a.LDAP.Search(query.Username)
+		if err != nil {
+			return ldap.ErrSearchFailed
 		}
 
 		docktorUser := types.User{
@@ -334,5 +330,5 @@ func (a *Authentication) authenticateWhenUserNotFound(query *LoginUserQuery) err
 	}
 
 	// When user is not found, there is no way to authenticate in application
-	return ErrInvalidCredentials
+	return ldap.ErrInvalidCredentials
 }

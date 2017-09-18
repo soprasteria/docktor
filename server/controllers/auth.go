@@ -9,9 +9,11 @@ import (
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
+	"github.com/soprasteria/docktor/server/adapters/ldap"
 	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/auth"
 	"github.com/soprasteria/docktor/server/modules/users"
+	"github.com/soprasteria/docktor/server/types"
 )
 
 // ErrNotAuthorized is an error when someone is trying to access unauthorized ressource for a given role
@@ -29,15 +31,11 @@ type Token struct {
 
 func newAuthAPI(c echo.Context) auth.Authentication {
 	// Handle APIs from Echo context
-	docktorAPI := c.Get("api").(*models.Docktor)
-	ldapAPI := c.Get("ldap")
-	var ldap *auth.LDAP
-	if ldapAPI != nil {
-		ldap = ldapAPI.(*auth.LDAP)
-	}
+	docktorAPI, _ := c.Get("api").(models.DocktorAPI)
+	ldapAPI, _ := c.Get("ldap").(ldap.Client)
 	return auth.Authentication{
 		Docktor: docktorAPI,
-		LDAP:    ldap,
+		LDAP:    ldapAPI,
 	}
 }
 
@@ -85,7 +83,7 @@ func (a *Auth) Register(c echo.Context) error {
 	login := newAuthAPI(c)
 
 	// Log in the application
-	err := login.RegisterUser(&auth.RegisterUserQuery{
+	err := login.RegisterUser(types.UserQuery{
 		Username:  username,
 		Password:  password,
 		Email:     email,
@@ -139,14 +137,14 @@ func (a *Auth) Login(c echo.Context) error {
 	login := newAuthAPI(c)
 
 	// Log in the application
-	err := login.AuthenticateUser(&auth.LoginUserQuery{
+	err := login.AuthenticateUser(types.UserQuery{
 		Username: username,
 		Password: password,
 	})
 	if err != nil {
 		log.WithError(err).WithField("username", username).Error("User authentication failed")
-		if err == auth.ErrInvalidCredentials {
-			return c.String(http.StatusForbidden, auth.ErrInvalidCredentials.Error())
+		if err == ldap.ErrInvalidCredentials {
+			return c.String(http.StatusForbidden, ldap.ErrInvalidCredentials.Error())
 		}
 		return c.String(http.StatusInternalServerError, err.Error())
 	}

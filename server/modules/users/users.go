@@ -13,7 +13,7 @@ import (
 
 // Rest contains APIs entrypoints needed for accessing users
 type Rest struct {
-	Docktor *models.Docktor
+	Docktor models.DocktorAPI
 }
 
 // UserRest contains data of user, amputed from sensible data

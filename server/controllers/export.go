@@ -18,7 +18,7 @@ type Export struct {
 
 //ExportAll exports all the data as a file
 func (a *Export) ExportAll(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	exporter := export.Export{Docktor: docktorAPI}
 
 	data, err := exporter.ExportAll()

@@ -16,7 +16,7 @@ type Sites struct {
 
 //GetAll sites from docktor
 func (s *Sites) GetAll(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	sites, err := docktorAPI.Sites().FindAll()
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Error while retreiving all sites")
@@ -26,7 +26,7 @@ func (s *Sites) GetAll(c echo.Context) error {
 
 //Save site into docktor
 func (s *Sites) Save(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	var site types.Site
 	err := c.Bind(&site)
 
@@ -49,7 +49,7 @@ func (s *Sites) Save(c echo.Context) error {
 
 //Delete site into docktor
 func (s *Sites) Delete(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	id := c.Param("id")
 	res, err := docktorAPI.Sites().Delete(bson.ObjectIdHex(id))
 	if err != nil {

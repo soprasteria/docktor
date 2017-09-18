@@ -17,7 +17,7 @@ type Tags struct {
 
 //GetAll tags from docktor
 func (s *Tags) GetAll(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	tags, err := docktorAPI.Tags().FindAll()
 	if err != nil {
 		return c.String(http.StatusInternalServerError, "Error while retreiving all tags")
@@ -27,7 +27,7 @@ func (s *Tags) GetAll(c echo.Context) error {
 
 //Save or update tag into docktor
 func (s *Tags) Save(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	id := c.Param("id")
 
 	var tag types.Tag
@@ -56,7 +56,7 @@ func (s *Tags) Save(c echo.Context) error {
 //Delete tag into docktor
 func (s *Tags) Delete(c echo.Context) error {
 
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	id := c.Param("id")
 
 	collections := []types.UseTags{

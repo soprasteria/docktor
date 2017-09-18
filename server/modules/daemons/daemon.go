@@ -3,9 +3,9 @@ package daemons
 import (
 	"time"
 
+	"github.com/soprasteria/docktor/server/adapters/cache"
 	"github.com/soprasteria/docktor/server/types"
 	"github.com/soprasteria/docktor/server/utils"
-	"gopkg.in/redis.v3"
 )
 
 // DaemonInfo struct
@@ -22,13 +22,13 @@ const (
 )
 
 // GetInfo : retrieving the docker daemon status using redis cache
-func GetInfo(daemon types.Daemon, client *redis.Client, force bool) (*DaemonInfo, error) {
-	info := &DaemonInfo{}
+func GetInfo(daemon types.Daemon, cache cache.Cache, force bool) (*DaemonInfo, error) {
+
 	key := daemon.ID.Hex()
 	if !force {
-		err := utils.GetFromRedis(client, key, info)
-		if err == nil {
-			return info, nil
+		value, _ := cache.Get(key)
+		if info, ok := value.(DaemonInfo); ok {
+			return &info, nil
 		}
 	}
 
@@ -37,14 +37,15 @@ func GetInfo(daemon types.Daemon, client *redis.Client, force bool) (*DaemonInfo
 		return nil, err
 	}
 
+	info := DaemonInfo{}
+
 	dockerInfo, err := api.Docker.Info()
 	if err != nil {
-		info = &DaemonInfo{Status: statusDOWN, NbImages: 0, NbContainers: 0, Message: err.Error()}
-		go utils.SetIntoRedis(client, key, info, 5*time.Minute)
-		return info, nil
+		info = DaemonInfo{Status: statusDOWN, NbImages: 0, NbContainers: 0, Message: err.Error()}
+	} else {
+		info = DaemonInfo{Status: statusUP, NbImages: dockerInfo.Images, NbContainers: dockerInfo.Containers}
 	}
 
-	info = &DaemonInfo{Status: statusUP, NbImages: dockerInfo.Images, NbContainers: dockerInfo.Containers}
-	go utils.SetIntoRedis(client, key, info, 5*time.Minute)
-	return info, nil
+	go cache.Set(key, info, 5*time.Minute)
+	return &info, nil
 }

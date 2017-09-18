@@ -8,13 +8,13 @@ import (
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
+	"github.com/soprasteria/docktor/server/adapters/cache"
+	"github.com/soprasteria/docktor/server/adapters/ldap"
 	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/auth"
 	"github.com/soprasteria/docktor/server/modules/users"
 	"github.com/soprasteria/docktor/server/types"
-	"github.com/spf13/viper"
 	"gopkg.in/mgo.v2/bson"
-	"gopkg.in/redis.v3"
 )
 
 // NotAuthorized is a template string used to report an unauthorized access to the API
@@ -23,10 +23,10 @@ var NotAuthorized = "API not authorized for user %q"
 // NotValidID is a template string used to report that the id is not valid (i.e. not a valid BSON ID)
 var NotValidID = "ID %q is not valid"
 
-func redisCache(client *redis.Client) echo.MiddlewareFunc {
+func redisCache(ca cache.Cache) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			c.Set("redis", client)
+			c.Set("cache", ca)
 			return next(c)
 		}
 	}
@@ -44,47 +44,25 @@ func docktorAPI(next echo.HandlerFunc) echo.HandlerFunc {
 	}
 }
 
-func openLDAP(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		address := viper.GetString("ldap.address")
-		baseDN := viper.GetString("ldap.baseDN")
-		bindDN := viper.GetString("ldap.bindDN")
-		bindPassword := viper.GetString("ldap.bindPassword")
-		searchFilter := viper.GetString("ldap.searchFilter")
-		usernameAttribute := viper.GetString("ldap.attr.username")
-		firstnameAttribute := viper.GetString("ldap.attr.firstname")
-		lastnameAttribute := viper.GetString("ldap.attr.lastname")
-		realNameAttribute := viper.GetString("ldap.attr.realname")
-		emailAttribute := viper.GetString("ldap.attr.email")
+func openLDAP(conf *ldap.Config) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			if conf.LdapServer == "" {
+				// Don't use LDAP, no problem
+				log.Info("No LDAP configured")
+				return next(c)
+			}
 
-		if address == "" {
-			// Don't use LDAP, no problem
-			log.Debug("No LDAP configured")
+			// Enrich the echo context with LDAP configuration
+			log.Info("LDAP configured")
+			ldap := ldap.NewClient(conf)
+			if err := ldap.Open(); err != nil {
+				return c.String(http.StatusFailedDependency, err.Error())
+			}
+			defer ldap.Close()
+			c.Set("ldap", ldap)
 			return next(c)
 		}
-
-		// Enrich the echo context with LDAP configuration
-		log.Debug("LDAP configured")
-
-		ldap := auth.NewLDAP(&auth.LDAPConf{
-			LdapServer:   address,
-			BaseDN:       baseDN,
-			BindDN:       bindDN,
-			BindPassword: bindPassword,
-			SearchFilter: searchFilter,
-			Attr: auth.Attributes{
-				Username:  usernameAttribute,
-				Firstname: firstnameAttribute,
-				Lastname:  lastnameAttribute,
-				Realname:  realNameAttribute,
-				Email:     emailAttribute,
-			},
-		})
-
-		c.Set("ldap", ldap)
-
-		return next(c)
-
 	}
 }
 
@@ -92,7 +70,7 @@ func getAuhenticatedUser(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Get api from context
 		userToken := c.Get("user-token").(*jwt.Token)
-		docktorAPI := c.Get("api").(*models.Docktor)
+		docktorAPI := c.Get("api").(models.DocktorAPI)
 
 		// Parse the token
 		claims := userToken.Claims.(*auth.MyCustomClaims)

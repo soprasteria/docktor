@@ -28,3 +28,7 @@ lint:
 	go get github.com/alecthomas/gometalinter
 	gometalinter --install
 	gometalinter --vendor --deadline=60m --fast --config=./gometalinter.json ./server/... ./cmd/... .
+
+generate:
+	go get github.com/vektra/mockery/.../
+	mockery -all -dir "./server/adapters" -inpkg
