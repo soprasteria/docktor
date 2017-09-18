@@ -34,7 +34,7 @@ var (
 
 // Authentication contains all APIs entrypoints needed for authentication
 type Authentication struct {
-	Docktor *models.Docktor
+	Docktor models.DocktorAPI
 	LDAP    ldap.Client
 }
 

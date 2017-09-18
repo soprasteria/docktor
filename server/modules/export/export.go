@@ -13,7 +13,7 @@ import (
 
 // Export contains APIs entrypoints needed for accessing users
 type Export struct {
-	Docktor *models.Docktor
+	Docktor models.DocktorAPI
 }
 
 //ExportAll exports all business data as a file

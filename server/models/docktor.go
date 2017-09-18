@@ -21,8 +21,8 @@ type Session interface {
 	Close()
 }
 
-//Client is the entrypoint of Docktor API
-type Client interface {
+//DocktorAPI is the entrypoint of Docktor DocktorAPI
+type DocktorAPI interface {
 	Services() ServicesRepo
 	Groups() GroupsRepo
 	Daemons() DaemonsRepo
@@ -67,7 +67,7 @@ func Connect() {
 }
 
 // Get the connexion to docktor API
-func Get() (Client, error) {
+func Get() (DocktorAPI, error) {
 	username := viper.GetString("server.mongo.username")
 	password := viper.GetString("server.mongo.password")
 	s := session.Clone()

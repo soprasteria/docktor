@@ -70,7 +70,7 @@ func getAuhenticatedUser(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Get api from context
 		userToken := c.Get("user-token").(*jwt.Token)
-		docktorAPI := c.Get("api").(*models.Docktor)
+		docktorAPI := c.Get("api").(models.DocktorAPI)
 
 		// Parse the token
 		claims := userToken.Claims.(*auth.MyCustomClaims)

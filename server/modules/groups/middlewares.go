@@ -12,7 +12,7 @@ import (
 // RetrieveGroup find group using id param and put it in echo.Context
 func RetrieveGroup(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		docktorAPI := c.Get("api").(*models.Docktor)
+		docktorAPI := c.Get("api").(models.DocktorAPI)
 		groupID := c.Param("groupID")
 		if groupID == "" {
 			return c.String(http.StatusBadRequest, GroupInvalidID)

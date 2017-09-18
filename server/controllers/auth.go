@@ -31,8 +31,8 @@ type Token struct {
 
 func newAuthAPI(c echo.Context) auth.Authentication {
 	// Handle APIs from Echo context
-	docktorAPI := c.Get("api").(*models.Docktor)
-	ldapAPI := c.Get("ldap").(ldap.Client)
+	docktorAPI, _ := c.Get("api").(models.DocktorAPI)
+	ldapAPI, _ := c.Get("ldap").(ldap.Client)
 	return auth.Authentication{
 		Docktor: docktorAPI,
 		LDAP:    ldapAPI,

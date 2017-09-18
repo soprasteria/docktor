@@ -11,7 +11,7 @@ import (
 // RetrieveService find service using id param and put it in echo.Context
 func RetrieveService(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		docktorAPI := c.Get("api").(*models.Docktor)
+		docktorAPI := c.Get("api").(models.DocktorAPI)
 		serviceID := c.Param("serviceID")
 		if serviceID == "" {
 			return c.String(http.StatusBadRequest, ServiceInvalidID)

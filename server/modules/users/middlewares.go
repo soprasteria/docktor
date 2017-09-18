@@ -11,7 +11,7 @@ import (
 // RetrieveUser find user using id param and put it in echo.Context
 func RetrieveUser(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		docktorAPI := c.Get("api").(*models.Docktor)
+		docktorAPI := c.Get("api").(models.DocktorAPI)
 		id := c.Param("id")
 		if id == "" {
 			return c.String(http.StatusBadRequest, UserInvalidID)

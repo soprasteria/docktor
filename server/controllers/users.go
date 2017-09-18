@@ -21,7 +21,7 @@ type Users struct {
 
 //GetAll users from docktor
 func (u *Users) GetAll(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	webservice := users.Rest{Docktor: docktorAPI}
 	users, err := webservice.GetAllUserRest()
 	if err != nil {
@@ -33,7 +33,7 @@ func (u *Users) GetAll(c echo.Context) error {
 // Update user into docktor
 // Only admin and current user is able to update a user
 func (u *Users) Update(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	authenticatedUser, err := u.getUserFromToken(c)
 	if err != nil {
 		return c.String(http.StatusUnauthorized, ldap.ErrInvalidCredentials.Error())
@@ -90,7 +90,7 @@ func (u *Users) Update(c echo.Context) error {
 
 //Delete user into docktor
 func (u *Users) Delete(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	id := c.Param("id")
 
 	authenticatedUser, err := u.getUserFromToken(c)
@@ -148,7 +148,7 @@ func (u *Users) ChangePassword(c echo.Context) error {
 		return c.String(http.StatusForbidden, "New password should not be empty and be at least 6 characters")
 	}
 
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	webservice := auth.Authentication{Docktor: docktorAPI}
 	err = webservice.ChangePassword(authenticatedUser.ID, options.OldPassword, options.NewPassword)
 
@@ -180,7 +180,7 @@ func (u *Users) Get(c echo.Context) error {
 }
 
 func (u *Users) getUserFromToken(c echo.Context) (users.UserRest, error) {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(models.DocktorAPI)
 	userToken := c.Get("user-token").(*jwt.Token)
 
 	claims := userToken.Claims.(*auth.MyCustomClaims)
