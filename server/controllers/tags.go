@@ -33,13 +33,13 @@ func (s *Tags) Save(c echo.Context) error {
 	var tag types.Tag
 	err := c.Bind(&tag)
 	if err != nil {
-		return c.String(http.StatusBadRequest, fmt.Sprintf("Error while binding tag: %v", err))
+		return c.String(http.StatusBadRequest, fmt.Sprintf("Unable to parse the tag received from client: %v", err))
 	}
 
 	// Force ID in tag to be the one passed as parameter
-	if id != "" && id != "-1" {
+	if id != "" {
 		if !bson.IsObjectIdHex(id) {
-			return c.String(http.StatusBadRequest, fmt.Sprintf("ID %q is not a valid BSON id", id))
+			return c.String(http.StatusBadRequest, fmt.Sprintf("The ID %q is not a valid BSON id", id))
 		}
 		tag.ID = bson.ObjectIdHex(id)
 	}
@@ -47,10 +47,9 @@ func (s *Tags) Save(c echo.Context) error {
 	res, err := docktorAPI.Tags().Save(tag)
 
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Sprintf("Error while saving tag: %v", err))
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("An error has occured while saving the tag: %v", err))
 	}
 	return c.JSON(http.StatusOK, res)
-
 }
 
 //Delete tag into docktor

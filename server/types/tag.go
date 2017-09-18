@@ -66,7 +66,7 @@ type Slugifiable interface {
 // Tag is a string
 type Tag struct {
 	ID          bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-	Name        TagName       `bson:"name" json:"name"` // The name the tag
+	Name        TagName       `bson:"name" json:"name"` // The name of the tag
 	Category    TagCategory   `bson:"category" json:"category"`
 	UsageRights Role          `bson:"usageRights,omitempty" json:"usageRights,omitempty"`
 	Created     time.Time     `bson:"created" json:"created"`
