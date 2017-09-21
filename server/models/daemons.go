@@ -35,7 +35,7 @@ type DaemonsRepo interface {
 	FindAllWithSite(siteID bson.ObjectId) ([]types.Daemon, error)
 	// Drop drops the content of the collection
 	Drop() error
-	// RemoveTag remove a tag from a service
+	// RemoveTag remove a tag from all daemons
 	RemoveTag(id bson.ObjectId) (*mgo.ChangeInfo, error)
 	// GetCollectionName returns the name of the collection
 	GetCollectionName() string
