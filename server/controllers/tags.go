@@ -47,7 +47,7 @@ func (s *Tags) Save(c echo.Context) error {
 	res, err := docktorAPI.Tags().Save(tag)
 
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Sprintf("An error has occured while saving the tag: %v", err))
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("An error has occurred while saving the tag: %v", err))
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -61,7 +61,9 @@ func (s *Tags) Delete(c echo.Context) error {
 	collections := []types.UseTags{
 		docktorAPI.Daemons(),
 		docktorAPI.Services(),
-		// TODO : add others collections (users, groups and containers in groups)
+		docktorAPI.Groups(),
+		docktorAPI.Users(),
+		// TODO : add others collections (containers in groups)
 	}
 
 	// Remove tags from all collections containings tags

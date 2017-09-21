@@ -28,6 +28,8 @@ type UsersRepo interface {
 	Drop() error
 	// GetCollectionName returns the name of the collection
 	GetCollectionName() string
+	// RemoveTag remove a tag from all users
+	RemoveTag(id bson.ObjectId) (*mgo.ChangeInfo, error)
 }
 
 // DefaultUsersRepo is the repository for users
@@ -108,4 +110,12 @@ func (r *DefaultUsersRepo) FindAllByGroupID(id bson.ObjectId) ([]types.User, err
 // Drop drops the content of the collection
 func (r *DefaultUsersRepo) Drop() error {
 	return r.coll.DropCollection()
+}
+
+// RemoveTag remove given tag from all users
+func (r *DefaultUsersRepo) RemoveTag(id bson.ObjectId) (*mgo.ChangeInfo, error) {
+	return r.coll.UpdateAll(
+		bson.M{"tags": bson.M{"$in": []bson.ObjectId{id}}},
+		bson.M{"$pull": bson.M{"tags": id}},
+	)
 }

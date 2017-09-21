@@ -32,8 +32,10 @@ type GroupsRepo interface {
 	FindAllByRegex(nameRegex string) ([]types.Group, error)
 	// FindAllWithContainers get all groups that contains a list of containers
 	FindAllWithContainers(groupNameRegex string, containersID []string) ([]types.Group, error)
-	// Remove a member from all groups
-	RemoveMemberFromAllGroups(userID bson.ObjectId) (*mgo.ChangeInfo, error)
+	// RemoveMember remove a member from all groups
+	RemoveMember(userID bson.ObjectId) (*mgo.ChangeInfo, error)
+	// RemoveTag remove a tag from all groups
+	RemoveTag(id bson.ObjectId) (*mgo.ChangeInfo, error)
 
 	//===========
 	// Containers
@@ -143,11 +145,19 @@ func (r *DefaultGroupsRepo) FindAllWithContainers(groupNameRegex string, contain
 	return results, err
 }
 
-// RemoveMemberFromAllGroups remove a member from a group
-func (r *DefaultGroupsRepo) RemoveMemberFromAllGroups(userID bson.ObjectId) (*mgo.ChangeInfo, error) {
+// RemoveMember remove a member from a group
+func (r *DefaultGroupsRepo) RemoveMember(userID bson.ObjectId) (*mgo.ChangeInfo, error) {
 	return r.coll.UpdateAll(
 		bson.M{},
 		bson.M{"$pull": bson.M{"members": bson.M{"user": userID}}},
+	)
+}
+
+// RemoveTag remove given tag from all groups
+func (r *DefaultGroupsRepo) RemoveTag(id bson.ObjectId) (*mgo.ChangeInfo, error) {
+	return r.coll.UpdateAll(
+		bson.M{"tags": bson.M{"$in": []bson.ObjectId{id}}},
+		bson.M{"$pull": bson.M{"tags": id}},
 	)
 }
 

@@ -83,7 +83,7 @@ func New() {
 			{
 				tagAPI.Use(isValidID("id"), hasRole(types.AdminRole))
 				tagAPI.DELETE("", tagsC.Delete)
-				tagAPI.PUT("", tagsC.Save, hasRole(types.AdminRole))
+				tagAPI.PUT("", tagsC.Save)
 			}
 		}
 
