@@ -68,7 +68,7 @@ func (a *LDAP) Search(username string) (*LDAPUserInfo, error) {
 	// find user entry & attributes
 	ldapUser, err := a.searchForUser(username)
 	if err != nil {
-		log.WithError(err).WithField("username", username).Error("Error looking for user in AD")
+		log.WithError(err).WithField("username", username).Warn("Error looking for user in AD")
 		return nil, err
 	}
 

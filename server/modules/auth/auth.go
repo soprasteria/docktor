@@ -46,11 +46,11 @@ type LoginUserQuery struct {
 
 // RegisterUserQuery represent connection data needed to register user
 type RegisterUserQuery struct {
-	Username  string
-	Password  string
-	Firstname string
-	Lastname  string
-	Email     string
+	Username  string `validate:"required,alphanum"`
+	Password  string `validate:"required,min=6"`
+	Firstname string `validate:"required"`
+	Lastname  string `validate:"required"`
+	Email     string `validate:"required,email"`
 }
 
 // MyCustomClaims contains data that will be signed in the JWT token

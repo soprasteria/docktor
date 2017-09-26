@@ -34,14 +34,14 @@ const (
 // User model
 type User struct {
 	ID          bson.ObjectId   `bson:"_id,omitempty" json:"id,omitempty"`
-	FirstName   string          `bson:"firstName" json:"firstName" validate:"required"`
-	LastName    string          `bson:"lastName" json:"lastName" validate:"required"`
-	DisplayName string          `bson:"displayName" json:"displayName" validate:"required"`
-	Username    string          `bson:"username" json:"username" validate:"required,alphanum"`
-	Email       string          `bson:"email" json:"email" validate:"required,email"`
-	Password    string          `bson:"password" json:"password" validate:"omitempty,min=6"`
-	Provider    Provider        `bson:"provider" json:"provider" validate:"required"`
-	Role        Role            `bson:"role" json:"role" validate:"required"`
+	FirstName   string          `bson:"firstName" json:"firstName"`
+	LastName    string          `bson:"lastName" json:"lastName"`
+	DisplayName string          `bson:"displayName" json:"displayName"`
+	Username    string          `bson:"username" json:"username"`
+	Email       string          `bson:"email" json:"email"`
+	Password    string          `bson:"password" json:"password"`
+	Provider    Provider        `bson:"provider" json:"provider"`
+	Role        Role            `bson:"role" json:"role"`
 	Created     time.Time       `bson:"created" json:"created"`
 	Updated     time.Time       `bson:"updated" json:"updated"`
 	Favorites   []bson.ObjectId `bson:"favorites" json:"favorites"`

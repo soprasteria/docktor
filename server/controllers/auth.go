@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"net/mail"
-	"strings"
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
@@ -41,31 +39,6 @@ func newAuthAPI(c echo.Context) auth.Authentication {
 	}
 }
 
-func checkParametersRegister(username, password, email, firstname, lastname string) error {
-	// Check form data
-	if username == "" || strings.Contains(username, " ") {
-		return errors.New("Username should not be empty and should not contains any whitespace")
-	}
-
-	if len(password) < 6 {
-		return errors.New("Password should be at least 6 characters")
-	}
-
-	if _, err := mail.ParseAddress(email); err != nil {
-		return errors.New("Email should not be empty and be valid")
-	}
-
-	if firstname == "" {
-		return errors.New("Firstname should not be empty")
-	}
-
-	if lastname == "" {
-		return errors.New("Lastname should not be empty")
-	}
-
-	return nil
-}
-
 // Register create an account
 func (a *Auth) Register(c echo.Context) error {
 
@@ -77,22 +50,23 @@ func (a *Auth) Register(c echo.Context) error {
 	lastname := c.FormValue("lastname")
 
 	// Check form data
-	if err := checkParametersRegister(username, password, email, firstname, lastname); err != nil {
+	registerQuery := auth.RegisterUserQuery{
+		Username:  username,
+		Password:  password,
+		Email:     email,
+		Firstname: firstname,
+		Lastname:  lastname,
+	}
+	if err := c.Validate(registerQuery); err != nil {
 		log.WithError(err).Warnf("Parameters to register are not valid for user %v", username)
-		return c.String(http.StatusForbidden, err.Error())
+		return c.String(http.StatusBadRequest, err.Error())
 	}
 
 	// Handle APIs from Echo context
 	login := newAuthAPI(c)
 
 	// Log in the application
-	err := login.RegisterUser(&auth.RegisterUserQuery{
-		Username:  username,
-		Password:  password,
-		Email:     email,
-		Firstname: firstname,
-		Lastname:  lastname,
-	})
+	err := login.RegisterUser(&registerQuery)
 	if err != nil {
 		if err == auth.ErrUsernameAlreadyTaken {
 			log.WithError(err).Warnf("Someone tried to register with an existing username %v", username)
