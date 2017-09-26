@@ -191,7 +191,7 @@ func passwordWithPepper(password string) string {
 
 // ResetPasswordUser resets the password of the user
 // At the end of this method, user won't be able to authenticate again until a new password is set
-func (a *Authentication) ResetPasswordUser(username string) (types.User, error) {
+func (a *Authentication) IsPasswordUserResetable(username string) (types.User, error) {
 	user, err := a.Docktor.Users().Find(username)
 	if err != nil {
 		if err == mgo.ErrNotFound || user.ID.Hex() == "" {

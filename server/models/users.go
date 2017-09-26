@@ -45,6 +45,15 @@ func (r *DefaultUsersRepo) GetCollectionName() string {
 	return r.coll.FullName
 }
 
+// CreateIndexes creates Index
+func (r *DefaultUsersRepo) CreateIndexes() error {
+	return r.coll.EnsureIndex(mgo.Index{
+		Key:    []string{"username"},
+		Unique: true,
+		Name:   "users_username_unique",
+	})
+}
+
 // Save a user into a database
 func (r *DefaultUsersRepo) Save(user types.User) (types.User, error) {
 	if user.ID.Hex() == "" {

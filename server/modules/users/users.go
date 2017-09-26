@@ -19,14 +19,15 @@ type Rest struct {
 // UserRest contains data of user, amputed from sensible data
 type UserRest struct {
 	ID          string          `json:"id"`
-	Username    string          `json:"username"`
-	FirstName   string          `json:"firstName"`
-	LastName    string          `json:"lastName"`
+	Username    string          `json:"username" validate:"required,alphanum"`
+	FirstName   string          `json:"firstName" validate:"required"`
+	LastName    string          `json:"lastName" validate:"required"`
 	DisplayName string          `json:"displayName"`
-	Role        types.Role      `json:"role"`
-	Email       string          `json:"email"`
-	Provider    types.Provider  `json:"provider"`
+	Role        types.Role      `json:"role" validate:"required"`
+	Email       string          `json:"email" validate:"required,email"`
+	Provider    types.Provider  `json:"provider" validate:"required"`
 	Tags        []bson.ObjectId `json:"tags"`
+	Favorites   []bson.ObjectId `json:"favorites"`
 }
 
 // IsAdmin checks that the user is an admin, meaning he can do anything on the application.

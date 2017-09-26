@@ -47,8 +47,8 @@ func checkParametersRegister(username, password, email, firstname, lastname stri
 		return errors.New("Username should not be empty and should not contains any whitespace")
 	}
 
-	if password == "" || len(password) < 6 {
-		return errors.New("Password should not be empty and be at least 6 characters")
+	if len(password) < 6 {
+		return errors.New("Password should be at least 6 characters")
 	}
 
 	if _, err := mail.ParseAddress(email); err != nil {
@@ -78,6 +78,7 @@ func (a *Auth) Register(c echo.Context) error {
 
 	// Check form data
 	if err := checkParametersRegister(username, password, email, firstname, lastname); err != nil {
+		log.WithError(err).Warnf("Parameters to register are not valid for user %v", username)
 		return c.String(http.StatusForbidden, err.Error())
 	}
 
@@ -93,26 +94,27 @@ func (a *Auth) Register(c echo.Context) error {
 		Lastname:  lastname,
 	})
 	if err != nil {
-		log.WithError(err).WithField("username", username).Error("User registration failed")
 		if err == auth.ErrUsernameAlreadyTaken {
+			log.WithError(err).Warnf("Someone tried to register with an existing username %v", username)
 			return c.String(http.StatusForbidden, auth.ErrUsernameAlreadyTaken.Error())
 		}
-		return c.String(http.StatusInternalServerError, err.Error())
+		log.WithError(err).WithField("username", username).Error("Unable to register user")
+		return c.String(http.StatusInternalServerError, "Unable to register user because of technical error. Retry later.")
 	}
 
 	// Generates a valid token
 	token, err := login.CreateLoginToken(username)
 	if err != nil {
-		log.WithError(err).WithField("username", username).Error("Login token creation failed")
-		return c.String(http.StatusInternalServerError, err.Error())
+		log.WithError(err).WithField("username", username).Error("Token creation failed while registering user")
+		return c.String(http.StatusInternalServerError, "Unable to register user because of technical error. Retry later.")
 	}
 
 	// Get the user from database
 	webservice := users.Rest{Docktor: login.Docktor}
 	user, err := webservice.GetUserRest(username)
 	if err != nil {
-		log.WithError(err).WithField("username", username).Error("User retrieval failed")
-		return c.String(http.StatusInternalServerError, err.Error())
+		log.WithError(err).WithField("username", username).Error("User retrieval failed while registering user")
+		return c.String(http.StatusInternalServerError, "Unable to register user because of technical error. Retry later.")
 	}
 
 	return c.JSON(http.StatusOK, Token{ID: token, User: user})
@@ -128,11 +130,13 @@ func (a *Auth) Login(c echo.Context) error {
 
 	// Check input parameters
 	if username == "" {
+		log.Warn("Someone tried to login with empty username")
 		return c.String(http.StatusForbidden, "Username should not be empty")
 	}
 
-	if password == "" {
-		return c.String(http.StatusForbidden, "Password should not be empty")
+	if len(password) < 6 {
+		log.Warn("Someone tried to login with a password that does not match security rules")
+		return c.String(http.StatusForbidden, "Password length should be at least 6 characters")
 	}
 
 	// Handle APIs from Echo context
@@ -144,26 +148,27 @@ func (a *Auth) Login(c echo.Context) error {
 		Password: password,
 	})
 	if err != nil {
-		log.WithError(err).WithField("username", username).Error("User authentication failed")
 		if err == auth.ErrInvalidCredentials {
+			log.WithError(err).Warnf("Someone tried to login with wrong credentials: %v", username)
 			return c.String(http.StatusForbidden, auth.ErrInvalidCredentials.Error())
 		}
-		return c.String(http.StatusInternalServerError, err.Error())
+		log.WithError(err).Error("User authentication failed")
+		return c.String(http.StatusInternalServerError, "Unable to login user because of technical error. Retry later.")
 	}
 
 	// Generates a valid token
 	token, err := login.CreateLoginToken(username)
 	if err != nil {
-		log.WithError(err).WithField("username", username).Error("Login token creation failed")
-		return c.String(http.StatusInternalServerError, err.Error())
+		log.WithError(err).WithField("username", username).Error("Login token creation failed while logging in user")
+		return c.String(http.StatusInternalServerError, "Unable to login user because of technical error. Retry later.")
 	}
 
 	// Get the user from database
 	webservice := users.Rest{Docktor: login.Docktor}
 	user, err := webservice.GetUserRest(username)
 	if err != nil {
-		log.WithError(err).WithField("username", username).Error("User retrieval failed")
-		return c.String(http.StatusInternalServerError, err.Error())
+		log.WithError(err).WithField("username", username).Error("Unable to retrieve user while logging in user")
+		return c.String(http.StatusInternalServerError, "Unable to login user because of technical error. Retry later.")
 	}
 
 	return c.JSON(http.StatusOK, Token{ID: token, User: user})
@@ -171,29 +176,32 @@ func (a *Auth) Login(c echo.Context) error {
 
 //ResetPassword handles resets the password of someone
 //When user reset his password, it generates an email to this person with a link to change his.
+// The password is not reset in database because someone with bad intentions could use this feature to prevent someone else to login.
 func (a *Auth) ResetPassword(c echo.Context) error {
 	// Get input parameters
 
-	//TODO : email et/ou username
 	username := c.FormValue("username")
 
 	// Check input parameters
 	if username == "" {
+		log.Warn("Someone tried to reset password with empty username")
 		return c.String(http.StatusForbidden, "Username should not be empty")
 	}
 
 	// Handle APIs from Echo context
 	login := newAuthAPI(c)
 
-	// Reset the password in DB
-	user, err := login.ResetPasswordUser(username)
+	// Check whether the password can be reset or not
+	user, err := login.IsPasswordUserResetable(username)
 	if err != nil {
+		log.WithError(err).Warnf("Someone tried to reset password of user %v because was not authorized to do so.", username)
 		return c.String(http.StatusForbidden, err.Error())
 	}
 	// Create a token that will be used for URL
 	token, err := login.CreateResetPasswordToken(user.Username)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Can't generate URL for password change")
+		log.WithError(err).Errorf("Unable to generate the password change URL for user %v", username)
+		return c.String(http.StatusInternalServerError, "Unable to reset password because of technical error. Retry Later.")
 	}
 
 	var protocol = "http"
@@ -217,10 +225,12 @@ func (a *Auth) ChangeResetPassword(c echo.Context) error {
 
 	// Check input parameters
 	if newPassword == "" {
+		log.Warn("Someone tried to reset change a resetted password with empty new password")
 		return c.String(http.StatusForbidden, "NewPassword should not be empty")
 	}
 
 	if token == "" {
+		log.Warn("Someone tried to reset change a resetted password with empty reset token")
 		return c.String(http.StatusForbidden, "Token should not be empty")
 	}
 
@@ -230,22 +240,23 @@ func (a *Auth) ChangeResetPassword(c echo.Context) error {
 	// Change the password of the user in DB
 	user, err := login.ChangeResetPasswordUser(token, newPassword)
 	if err != nil {
+		log.WithError(err).Error("Unable to reset password in database")
 		return c.String(http.StatusForbidden, err.Error())
 	}
 
 	// Generates a valid token
 	authenticationToken, err := login.CreateLoginToken(user.Username)
 	if err != nil {
-		log.WithError(err).WithField("username", user.Username).Error("Login token creation failed")
-		return c.String(http.StatusInternalServerError, err.Error())
+		log.WithError(err).WithField("username", user.Username).Error("Login token creation failed after a password change")
+		return c.String(http.StatusInternalServerError, "Unable to change reset password because of technical error. Retry Later.")
 	}
 
 	// Get the user from database
 	webservice := users.Rest{Docktor: login.Docktor}
 	userRest, err := webservice.GetUserRest(user.Username)
 	if err != nil {
-		log.WithError(err).WithField("username", user.Username).Error("User retrieval failed")
-		return c.String(http.StatusInternalServerError, err.Error())
+		log.WithError(err).WithField("username", user.Username).Error("Unable to fetch user after password change")
+		return c.String(http.StatusInternalServerError, "Unable to change reset password because of technical error. Retry Later.")
 	}
 
 	return c.JSON(http.StatusOK, Token{ID: authenticationToken, User: userRest})
