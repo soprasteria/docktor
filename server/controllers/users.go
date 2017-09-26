@@ -130,7 +130,7 @@ func (u *Users) Delete(c echo.Context) error {
 	}
 
 	// Remove members on all groups as we delete it
-	rmInfo, err := docktorAPI.Groups().RemoveMemberFromAllGroups(bson.ObjectIdHex(id))
+	rmInfo, err := docktorAPI.Groups().RemoveMember(bson.ObjectIdHex(id))
 	if err != nil {
 		log.WithField("info", rmInfo).WithField("userId", id).Warn("Could not remove member from groups after deleting user")
 	}
