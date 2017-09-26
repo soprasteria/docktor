@@ -23,7 +23,7 @@ const createTags = (form) => {
     const createTag = (tag) => {
       dispatch(TagsActions.requestSave(tag));
 
-      let request = new Request('/api/tags', withAuth({
+      let request = new Request('/api/tags/new', withAuth({
         method: 'POST',
         headers: {
           'Accept': 'application/json',

@@ -78,12 +78,12 @@ func New() {
 		tagsAPI := api.Group("/tags")
 		{
 			tagsAPI.GET("", tagsC.GetAll)
-			tagsAPI.POST("", tagsC.Save, hasRole(types.AdminRole))
-			tagAPI := tagsAPI.Group("/:id")
+			tagsAPI.POST("/new", tagsC.Save, hasRole(types.AdminRole))
+			tagAPI := tagsAPI.Group("/:tagID")
 			{
-				tagAPI.Use(isValidID("id"), hasRole(types.AdminRole))
+				tagAPI.Use(isValidID("tagID"), hasRole(types.AdminRole))
 				tagAPI.DELETE("", tagsC.Delete)
-				tagAPI.PUT("", tagsC.Save, hasRole(types.AdminRole))
+				tagAPI.PUT("", tagsC.Save)
 			}
 		}
 

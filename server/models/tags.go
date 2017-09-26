@@ -2,16 +2,11 @@ package models
 
 import (
 	"fmt"
-	"time"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/soprasteria/docktor/server/types"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
-
-// TagAlreadyExistErrMessage is an error message when a tag alread exists
-const TagAlreadyExistErrMessage string = "Tag %q already exists in category %q"
 
 // TagsRepo is the repo for tags
 type TagsRepo interface {
@@ -45,6 +40,15 @@ func NewTagsRepo(coll *mgo.Collection) TagsRepo {
 	return &DefaultTagsRepo{coll: coll}
 }
 
+// CreateIndexes creates Index
+func (r *DefaultTagsRepo) CreateIndexes() error {
+	return r.coll.EnsureIndex(mgo.Index{
+		Key:    []string{"category", "name"},
+		Unique: true,
+		Name:   "tag_cat_name_unique",
+	})
+}
+
 // GetCollectionName gets the name of the collection
 func (r *DefaultTagsRepo) GetCollectionName() string {
 	return r.coll.FullName
@@ -54,73 +58,12 @@ func (r *DefaultTagsRepo) GetCollectionName() string {
 // Two different tags can not have the same name and category (unicity is checked on slugified name and category)
 func (r *DefaultTagsRepo) Save(tag types.Tag) (types.Tag, error) {
 
-	// Create a new tag from input one because
-	// we have to check each value and only update updatable fields (for example : created should not be changed)
-	var resTag types.Tag
-
-	tagByNameAndCat, err := r.Find(tag.Name.GetRaw(), tag.Category.GetRaw())
-
-	if tag.ID.Hex() == "" {
-		// New tag to create.
-		if err == nil {
-			// Tag cannot created when we found another tag with same info
-			log.WithField("newtag_name", tag.Name).WithField("newtag_category", tag.Category).
-				WithField("existingtag_name", tagByNameAndCat.Name).WithField("existingtag_category", tagByNameAndCat.Category).
-				Warning("Can't create tag because it already exists...")
-			return types.Tag{}, fmt.Errorf(
-				TagAlreadyExistErrMessage,
-				tag.Name.GetRaw(), tag.Category.GetRaw(),
-			)
-		}
-		resTag.ID = bson.NewObjectId()
-		resTag.Created = time.Now()
-	} else {
-
-		t, errFind := r.FindByIDBson(tag.ID)
-		if errFind != nil {
-			// Can't find tag by id
-			return types.Tag{}, fmt.Errorf(
-				"Can't update tag %q with category %q and id %q because it does not exist",
-				tag.Name.GetRaw(), tag.Category.GetRaw(), tag.ID.Hex(),
-			)
-		}
-		if tagByNameAndCat.ID.Hex() != "" && t.ID != tagByNameAndCat.ID {
-			// Tag not updatable when another tag already uses same Name and Category
-			log.WithField("newtag_name", tag.Name).WithField("newtag_category", tag.Category).
-				WithField("existingtag_name", tagByNameAndCat.Name).WithField("existingtag_category", tagByNameAndCat.Category).
-				Warning("Can't update tag because it already exists...")
-			return types.Tag{}, fmt.Errorf(
-				TagAlreadyExistErrMessage,
-				tagByNameAndCat.Name.GetRaw(), tagByNameAndCat.Category.GetRaw(),
-			)
-		}
-
-		// Fill the fields by default from the one found on database
-		// (like the creation date that could not be send by the client)
-		resTag = t
+	_, err := r.coll.UpsertId(tag.ID, bson.M{"$set": tag})
+	if mgo.IsDup(err) {
+		return tag, fmt.Errorf("Another tag exists with category %v and name %v", tag.Category.GetRaw(), tag.Name.GetRaw())
 	}
 
-	// Update only what is updatable
-	resTag.Name = types.NewTagName(tag.Name.GetRaw())
-	resTag.Category = types.NewTagCategory(tag.Category.GetRaw())
-	resTag.Updated = time.Now()
-	resTag.UsageRights = tag.UsageRights
-
-	// Default values
-	if resTag.UsageRights == "" {
-		resTag.UsageRights = types.AdminRole
-	}
-
-	// Syntaxic Checks
-	if resTag.Name.GetSlug() == "" {
-		return types.Tag{}, fmt.Errorf("Name should not be empty : %q (slug:%q)", resTag.Name.GetRaw(), resTag.Name.GetSlug())
-	}
-	if resTag.Category.GetSlug() == "" {
-		return types.Tag{}, fmt.Errorf("Category should not be empty : %q (slug:%q)", resTag.Category.GetRaw(), resTag.Category.GetSlug())
-	}
-
-	_, err = r.coll.UpsertId(resTag.ID, bson.M{"$set": resTag})
-	return resTag, err
+	return tag, err
 }
 
 // Delete a tag in database

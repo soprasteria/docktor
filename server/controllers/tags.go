@@ -3,13 +3,18 @@ package controllers
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
 	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/types"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
+
+// TagAlreadyExistErrMessage is an error message when a tag alread exists
+const TagAlreadyExistErrMessage string = "Tag %q already exists in category %q"
 
 // Tags contains all group handlers
 type Tags struct {
@@ -20,7 +25,8 @@ func (s *Tags) GetAll(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
 	tags, err := docktorAPI.Tags().FindAll()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Error while retreiving all tags")
+		log.WithError(err).Error("Unable to get all tags")
+		return c.String(http.StatusInternalServerError, "Unable to get all tags because of technical error. Retry later")
 	}
 	return c.JSON(http.StatusOK, tags)
 }
@@ -28,26 +34,62 @@ func (s *Tags) GetAll(c echo.Context) error {
 //Save or update tag into docktor
 func (s *Tags) Save(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
-	id := c.Param("id")
 
-	var tag types.Tag
-	err := c.Bind(&tag)
-	if err != nil {
-		return c.String(http.StatusBadRequest, fmt.Sprintf("Unable to parse the tag received from client: %v", err))
+	// Unserialize the tag
+	var tagToSave types.Tag
+	if err := c.Bind(&tagToSave); err != nil {
+		log.WithError(err).Error("Unable to bind tag to save")
+		return c.String(http.StatusBadRequest, "Unable to parse tag received from client")
 	}
 
-	// Force ID in tag to be the one passed as parameter
-	if id != "" {
-		if !bson.IsObjectIdHex(id) {
-			return c.String(http.StatusBadRequest, fmt.Sprintf("The ID %q is not a valid BSON id", id))
+	id := c.Param("tagID")
+	var savedTag types.Tag
+	if id == "" {
+		// Tag to create
+		savedTag.ID = bson.NewObjectId()
+		savedTag.Created = time.Now()
+	} else {
+		// Tag to update
+		savedTag.ID = bson.ObjectIdHex(id)
+		existingTag, err := docktorAPI.Tags().FindByIDBson(savedTag.ID)
+		if err != nil {
+			if err == mgo.ErrNotFound {
+				log.WithError(err).Warnf("Tried to save a tag that does not exist: %v", savedTag.ID)
+				return c.String(http.StatusBadRequest, "Tag does not exist")
+			}
+			log.WithError(err).Errorf("Unable to find tag because of unexpected error : %v", savedTag.ID)
+			return c.String(http.StatusInternalServerError, "Unable to find tag because of technical error. Retry later.")
 		}
-		tag.ID = bson.ObjectIdHex(id)
+		savedTag.Created = existingTag.Created
 	}
 
-	res, err := docktorAPI.Tags().Save(tag)
+	// Set values to writable data
+	savedTag.Name = types.NewTagName(tagToSave.Name.GetRaw())
+	savedTag.Category = types.NewTagCategory(tagToSave.Category.GetRaw())
+	savedTag.Updated = time.Now()
+	savedTag.UsageRights = tagToSave.UsageRights
 
+	// Set default values
+	if savedTag.UsageRights == "" {
+		savedTag.UsageRights = types.AdminRole
+	}
+
+	// Validate fields
+	if err := c.Validate(savedTag); err != nil {
+		log.WithError(err).Errorf("Unable to save tag %v because some fields are not valid", savedTag.ID)
+		return c.String(http.StatusBadRequest, "Category, name and usage rights are required")
+	}
+	if !savedTag.UsageRights.IsValid() {
+		err := fmt.Errorf("Expected userRights to be 'admin' or 'user', obtained '%v'", savedTag.UsageRights)
+		log.WithError(err).Errorf("Unable to save tag %v because usage rights are not valid", savedTag.ID)
+		return c.String(http.StatusBadRequest, fmt.Sprintf("Unable to save tag because usage rights are not valid: %v", err))
+	}
+
+	// Saving to database
+	res, err := docktorAPI.Tags().Save(savedTag)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Sprintf("An error has occured while saving the tag: %v", err))
+		log.WithError(err).Errorf("Unable to save tag %v because of technical error", savedTag.ID)
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to save tag because of technical error: %v.", err))
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -56,12 +98,13 @@ func (s *Tags) Save(c echo.Context) error {
 func (s *Tags) Delete(c echo.Context) error {
 
 	docktorAPI := c.Get("api").(*models.Docktor)
-	id := c.Param("id")
+	id := c.Param("tagID")
 
 	collections := []types.UseTags{
 		docktorAPI.Daemons(),
 		docktorAPI.Services(),
-		// TODO : add others collections (users, groups and containers in groups)
+		docktorAPI.Users(),
+		// TODO : add others collections (groups, services ...)
 	}
 
 	// Remove tags from all collections containings tags
@@ -80,6 +123,7 @@ func (s *Tags) Delete(c echo.Context) error {
 
 	res, err := docktorAPI.Tags().Delete(bson.ObjectIdHex(id))
 	if err != nil {
+		log.WithError(err).Errorf("Unable to delete tag %v because of database error", id)
 		return c.String(http.StatusInternalServerError, fmt.Sprintf("Error while deleting tag: %v", err))
 	}
 	return c.String(http.StatusOK, res.Hex())
