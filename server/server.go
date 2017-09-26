@@ -170,7 +170,6 @@ func New() {
 	engine.Static("/fonts", "client/dist/fonts")
 
 	engine.GET("/*", GetIndex)
-	engine.HideBanner = true
 
 	if log.GetLevel() == log.DebugLevel {
 		displayAvailableRoutes(engine.Routes())
@@ -178,7 +177,7 @@ func New() {
 
 	createIndexes()
 
-	log.Info("Server started on port 8080")
+	log.Info("Starting server on port 8080...")
 	if err := engine.Start(":8080"); err != nil {
 		log.WithError(err).Fatal("Can't start server")
 		engine.Logger.Fatal(err.Error())
@@ -188,13 +187,13 @@ func New() {
 func createIndexes() {
 	dock, err := models.Get()
 	if err != nil {
-		log.WithError(err).Fatal("Can't ensure that indexes are created")
+		log.WithError(err).Fatal("Can't ensure that indexes have been created")
 		return
 	}
 	defer dock.Close()
 	for _, db := range dock.Collections() {
 		if dbWithIndex, ok := db.(models.IsCollectionWithIndexes); ok {
-			log.Debugf("Ensuring indexes creating for '%v' collection", db.GetCollectionName())
+			log.Infof("Ensuring indexes creating for '%v' collection", db.GetCollectionName())
 			err := dbWithIndex.CreateIndexes()
 			if err != nil {
 				log.WithError(err).Error("Cannot create index")
