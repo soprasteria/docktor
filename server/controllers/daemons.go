@@ -26,7 +26,7 @@ func (d *Daemons) GetAll(c echo.Context) error {
 	daemons, err := docktorAPI.Daemons().FindAll()
 	if err != nil {
 		log.WithError(err).Error("Unable to get all daemons")
-		return c.String(http.StatusInternalServerError, "Unable to get all daemons because of technical error. Retry later.")
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to get all daemons because of technical error: %v. Retry later.", err))
 	}
 	return c.JSON(http.StatusOK, daemons)
 }
@@ -69,13 +69,13 @@ func (d *Daemons) Save(c echo.Context) error {
 
 	// Validate fields from validator tags for common types
 	if err := c.Validate(daemon); err != nil {
-		log.WithError(err).Errorf("Unable to save daemon because some fields are not valid: %v", daemon.ID)
+		log.WithError(err).Errorf("Unable to save daemon %v because some fields are not valid", daemon.ID)
 		return c.String(http.StatusBadRequest, fmt.Sprintf("Some fields of daemon are not valid: %v", err))
 	}
 
 	// Validate fields that cannot be validated by validator engine
 	if err := daemon.Validate(); err != nil {
-		log.WithError(err).Errorf("Unable to save daemon because some fields are not valid: %v", daemon.ID)
+		log.WithError(err).Errorf("Unable to save daemon %v because some fields are not valid", daemon.ID)
 		return c.String(http.StatusBadRequest, fmt.Sprintf("Some fields of daemon are not valid: %v", err))
 	}
 
@@ -90,7 +90,7 @@ func (d *Daemons) Save(c echo.Context) error {
 			return c.String(http.StatusBadRequest, "Site does not exist")
 		}
 		log.WithError(err).WithFields(loginfo).Errorf("Tried to save a daemon with given site but unexpected error when fetching site")
-		return c.String(http.StatusInternalServerError, "Unable to check if site exist. Retry later.")
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to check if site exist: %v. Retry later.", err))
 	}
 
 	// Keep only existing tags
@@ -99,7 +99,7 @@ func (d *Daemons) Save(c echo.Context) error {
 	res, err := docktorAPI.Daemons().Save(daemon)
 	if err != nil {
 		log.WithError(err).Errorf("Unexpected error when saving daemon %v", daemon.ID)
-		return c.String(http.StatusInternalServerError, "Unable to save daemon because of technical error. Retry later")
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to save daemon because of technical error: %v. Retry later.", err))
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -115,7 +115,7 @@ func (d *Daemons) Delete(c echo.Context) error {
 	res, err := docktorAPI.Daemons().Delete(bson.ObjectIdHex(id))
 	if err != nil {
 		log.WithError(err).Errorf("Unexpected error when deleting daemon %v", id)
-		return c.String(http.StatusInternalServerError, "Unable to delete daemon because of technical error. Retry later.")
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to delete daemon because of technical error: %v. Retry later.", err))
 	}
 	return c.String(http.StatusOK, res.Hex())
 }
@@ -135,7 +135,7 @@ func (d *Daemons) GetInfo(c echo.Context) error {
 	infos, err := daemons.GetInfo(daemon, redisClient, forceParam == "true")
 	if err != nil {
 		log.WithError(err).Errorf("Unexpected error when getting info/status from daemon %v", daemon.ID)
-		return c.String(http.StatusBadRequest, "Unable to get daemon info because of technical error. Retry later.")
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to get daemon info because of technical error: %v. Retry later.", err))
 	}
 	return c.JSON(http.StatusOK, infos)
 }

@@ -65,7 +65,7 @@ func (s *Sites) Save(c echo.Context) error {
 
 	// Validate fields from validator tags for common types
 	if err = c.Validate(site); err != nil {
-		log.WithError(err).Errorf("Unable to save site because some fields are not valid: %v", site.ID)
+		log.WithError(err).Errorf("Unable to save site %v because some fields are not valid", site.ID)
 		return c.String(http.StatusBadRequest, fmt.Sprintf("Some fields of site are not valid: %v", err))
 	}
 
