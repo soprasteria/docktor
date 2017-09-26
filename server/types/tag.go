@@ -11,8 +11,8 @@ import (
 
 //TagName is the name of a tag, represented by its raw name and its slugified one (Slug is unique)
 type TagName struct {
-	Raw  string `bson:"raw" json:"raw"`
-	Slug string `bson:"slug" json:"slug"`
+	Raw  string `bson:"raw" json:"raw" validate:"required"`
+	Slug string `bson:"slug" json:"slug" validate:"required"`
 }
 
 // NewTagName creates a new tag name from a raw name
@@ -35,8 +35,8 @@ func (tn *TagName) GetSlug() string {
 
 //TagCategory is the category of a tag, represented by its raw name and its slugified one (Slug is unique)
 type TagCategory struct {
-	Raw  string `bson:"raw" json:"raw"`
-	Slug string `bson:"slug" json:"slug"`
+	Raw  string `bson:"raw" json:"raw" validate:"required"`
+	Slug string `bson:"slug" json:"slug" validate:"required"`
 }
 
 // NewTagCategory creates a new tag category from a raw category name
@@ -66,11 +66,11 @@ type Slugifiable interface {
 // Tag is a string
 type Tag struct {
 	ID          bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-	Name        TagName       `bson:"name" json:"name"` // The name of the tag
-	Category    TagCategory   `bson:"category" json:"category"`
+	Name        TagName       `bson:"name" json:"name" validate:"required"`         // Unique in database
+	Category    TagCategory   `bson:"category" json:"category" validate:"required"` // Unique in database
 	UsageRights Role          `bson:"usageRights,omitempty" json:"usageRights,omitempty"`
-	Created     time.Time     `bson:"created" json:"created"`
-	Updated     time.Time     `bson:"updated" json:"updated"`
+	Created     time.Time     `bson:"created" json:"created"` // Fields that will be populated automatically by server
+	Updated     time.Time     `bson:"updated" json:"updated"` // Fields that will be populated automatically by server
 }
 
 // Tags is a slice of tags

@@ -60,16 +60,15 @@ type FileSystems []FileSystem
 
 // Group is a entity (like a project) that gather services instances as containers
 type Group struct {
-	ID           bson.ObjectId   `bson:"_id,omitempty" json:"id,omitempty"`
-	Created      time.Time       `bson:"created" json:"created"`
-	Title        string          `bson:"title" json:"title"`
-	Description  string          `bson:"description" json:"description"`
-	PortMinRange int             `bson:"portminrange" json:"portminrange"`
-	PortMaxRange int             `bson:"portmaxrange" json:"portmaxrange"`
-	FileSystems  FileSystems     `bson:"filesystems" json:"filesystems"`
-	Containers   Containers      `bson:"containers" json:"containers"`
-	Members      Members         `bson:"members" json:"members"`
-	Tags         []bson.ObjectId `bson:"tags" json:"tags"`
+	ID          bson.ObjectId   `bson:"_id,omitempty" json:"id,omitempty"`
+	Title       string          `bson:"title" json:"title" validate:"required"` // Unique in database
+	Description string          `bson:"description" json:"description"`
+	FileSystems FileSystems     `bson:"filesystems" json:"filesystems"`
+	Containers  Containers      `bson:"containers" json:"containers"`
+	Members     Members         `bson:"members" json:"members"`
+	Tags        []bson.ObjectId `bson:"tags" json:"tags"`
+	Created     time.Time       `bson:"created" json:"created"` // Fields that will be populated automatically by server
+	Updated     time.Time       `bson:"updated" json:"updated"` // Fields that will be populated automatically by server
 }
 
 // NewGroup creates new group for another one.

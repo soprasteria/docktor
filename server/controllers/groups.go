@@ -32,9 +32,8 @@ func (g *Groups) Save(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
 	var group types.Group
 	err := c.Bind(&group)
-
 	if err != nil {
-		return c.String(http.StatusBadRequest, fmt.Sprintf("Error while binding group: %v", err))
+		return c.String(http.StatusBadRequest, fmt.Sprintf("Unable to parse the group received from client: %v", err))
 	}
 
 	// If the ID is empty, it's a creation, so generate an object ID
@@ -47,9 +46,14 @@ func (g *Groups) Save(c echo.Context) error {
 	existingMembers := existingMembers(docktorAPI, group.Members)
 	group.Members = existingMembers
 
+	// Validate fields from validator tags for common types
+	if err = c.Validate(group); err != nil {
+		return c.String(http.StatusBadRequest, fmt.Sprintf("Some fields of group are not valid: %v", err))
+	}
+
 	res, err := docktorAPI.Groups().Save(group)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Sprintf("Error while saving group: %v", err))
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("An error has occured while saving group: %v", err))
 	}
 	return c.JSON(http.StatusOK, res)
 }

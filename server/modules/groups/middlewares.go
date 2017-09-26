@@ -19,7 +19,7 @@ func RetrieveGroup(next echo.HandlerFunc) echo.HandlerFunc {
 		}
 		group, err := docktorAPI.Groups().FindByID(groupID)
 		if err != nil || group.ID.Hex() == "" {
-			log.WithField("group", groupID).Error("Unable to fetch group")
+			log.WithField("group", groupID).Error("Unable to find the group")
 			return c.String(http.StatusNotFound, fmt.Sprintf(GroupNotFound, groupID))
 		}
 		c.Set("group", group)
