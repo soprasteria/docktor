@@ -61,6 +61,7 @@ func GetUserRest(user types.User) UserRest {
 		Role:        user.Role,
 		Provider:    user.Provider,
 		Tags:        user.Tags,
+		Favorites:   user.Favorites,
 	}
 }
 
@@ -75,6 +76,7 @@ func OverwriteUserFromRest(userToOverwrite types.User, userWithNewData UserRest)
 	userToOverwrite.Email = userWithNewData.Email
 	userToOverwrite.Role = userWithNewData.Role
 	userToOverwrite.Tags = userWithNewData.Tags
+	userToOverwrite.Favorites = userWithNewData.Favorites
 	return userToOverwrite
 }
 
@@ -148,7 +150,7 @@ func updateUserAccountData(userFromDocktor types.User, email, displayName, first
 // UpdateUser allows a user to modify his own profile
 // This method updates: FirstName, LastName, DisplayName, Email (only in local provider mode), Tags, Role
 // The controls for rights to modify a field must be done before calling this method
-func (s *Rest) UpdateUser(userID string, email, displayName, firstName, lastName *string, role *types.Role, tags []bson.ObjectId) (UserRest, error) {
+func (s *Rest) UpdateUser(userID string, email, displayName, firstName, lastName *string, role *types.Role, tags []bson.ObjectId, favorites []bson.ObjectId) (UserRest, error) {
 	if s.Docktor == nil {
 		return UserRest{}, errors.New("Docktor API is not initialized")
 	}
@@ -171,13 +173,15 @@ func (s *Rest) UpdateUser(userID string, email, displayName, firstName, lastName
 		userFromDocktor.Tags = tags
 	}
 
+	if favorites != nil {
+		userFromDocktor.Favorites = favorites
+	}
+
 	if role != nil && role.IsValid() {
 		userFromDocktor.Role = *role
 	}
 
 	userFromDocktor.Updated = time.Now()
-
-	// TODO: update groups and favorites
 
 	// Save the user
 	res, err := s.Docktor.Users().Save(userFromDocktor)

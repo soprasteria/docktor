@@ -40,6 +40,7 @@ func (u *Users) Update(c echo.Context) error {
 	}
 
 	// Get User from body
+	id := c.Param("userID")
 	var userRest users.UserRest
 	err = c.Bind(&userRest)
 	if err != nil {
@@ -49,6 +50,7 @@ func (u *Users) Update(c echo.Context) error {
 
 	// This route is only for update of existing user.
 	// Another route exists for create a new user
+	userRest.ID = id
 	if userRest.ID == "" {
 		log.Warn("Someone tried to use user updating route with empty ID")
 		return c.String(http.StatusBadRequest, "Invalid user ID. User can not be created with this route. Please register.")
@@ -68,28 +70,34 @@ func (u *Users) Update(c echo.Context) error {
 
 	var email, displayName, firstName, lastName *string
 	var role *types.Role
-	var tags []bson.ObjectId
+	var tags, favorites []bson.ObjectId
 
 	if authenticatedUser.IsAdmin() {
 		log.WithFields(log.Fields{
-			"newTags": userRest.Tags,
-			"newRole": userRest.Role,
-		}).Info("Modifying user as Admin")
+			"username": userRest.Username,
+			"newTags":  userRest.Tags,
+			"newRole":  userRest.Role,
+		}).Debug("Modifying user as Admin")
 		// An admin is allowed to modify the following fields
 		tags = userRest.Tags
 		role = &userRest.Role
 	}
 
-	if authenticatedUser.ID == userRest.ID {
+	if authenticatedUser.ID == userRest.ID || authenticatedUser.IsAdmin() {
 		// A user is allowed to modify the following fields from his own profile
 		email = &userRest.Email
 		displayName = &userRest.DisplayName
 		firstName = &userRest.FirstName
 		lastName = &userRest.LastName
+		favorites = userRest.Favorites
 	}
 
+	// Automatically improve qualityf of data by keeping only existing external entities
+	tags = existingTags(docktorAPI, tags)
+	favorites = existingGroups(docktorAPI, favorites)
+
 	webservice := users.Rest{Docktor: docktorAPI}
-	res, err := webservice.UpdateUser(userRest.ID, email, displayName, firstName, lastName, role, tags)
+	res, err := webservice.UpdateUser(userRest.ID, email, displayName, firstName, lastName, role, tags, favorites)
 	if err != nil {
 		log.WithError(err).Errorf("Unable to update user %v because of unexpected error", userRest.ID)
 		return c.String(http.StatusInternalServerError, "Unable to update user because of technical error. Retry later.")
@@ -101,7 +109,7 @@ func (u *Users) Update(c echo.Context) error {
 //Delete user into docktor
 func (u *Users) Delete(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
-	id := c.Param("id")
+	id := c.Param("userID")
 
 	authenticatedUser, err := u.getUserFromToken(c)
 	if err != nil {
@@ -151,7 +159,7 @@ func (u *Users) ChangePassword(c echo.Context) error {
 		return c.String(http.StatusForbidden, auth.ErrInvalidCredentials.Error())
 	}
 
-	id := c.Param("id")
+	id := c.Param("userID")
 	if authenticatedUser.ID != id {
 		log.Errorf("User %v tried to change password of user %v !", authenticatedUser.Username, id)
 		return c.String(http.StatusForbidden, "Can't change password of someone else")

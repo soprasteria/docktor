@@ -12,7 +12,7 @@ import (
 func RetrieveUser(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		docktorAPI := c.Get("api").(*models.Docktor)
-		id := c.Param("id")
+		id := c.Param("userID")
 		if id == "" {
 			return c.String(http.StatusBadRequest, UserInvalidID)
 		}

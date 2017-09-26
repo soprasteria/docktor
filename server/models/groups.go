@@ -28,6 +28,8 @@ type GroupsRepo interface {
 	FindAll() ([]types.Group, error)
 	// FindAllByName get all groups by the give name
 	FindAllByName(name string) ([]types.Group, error)
+	// FindAllByIDs get all groups from thei ids
+	FindAllByIDs(ids []bson.ObjectId) ([]types.Group, error)
 	// FindAllByRegex get all groups by the regex name
 	FindAllByRegex(nameRegex string) ([]types.Group, error)
 	// FindAllWithContainers get all groups that contains a list of containers
@@ -114,6 +116,13 @@ func (r *DefaultGroupsRepo) FindByIDBson(id bson.ObjectId) (types.Group, error) 
 func (r *DefaultGroupsRepo) FindAll() ([]types.Group, error) {
 	results := []types.Group{}
 	err := r.coll.Find(bson.M{}).All(&results)
+	return results, err
+}
+
+// FindAllByIDs get all groups from thei ids
+func (r *DefaultGroupsRepo) FindAllByIDs(ids []bson.ObjectId) ([]types.Group, error) {
+	results := []types.Group{}
+	err := r.coll.Find(bson.M{"_id": bson.M{"$in": ids}}).All(&results)
 	return results, err
 }
 

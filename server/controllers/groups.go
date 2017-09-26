@@ -76,6 +76,23 @@ func existingMembers(docktorAPI *models.Docktor, members types.Members) types.Me
 	return existingMembers
 }
 
+// existingGroups return groups filtered by existing ones
+// Checks wether the group actually exists in database
+func existingGroups(docktorAPI *models.Docktor, groupsIDs []bson.ObjectId) []bson.ObjectId {
+
+	existingGroupIDs := []bson.ObjectId{}
+
+	// Get all real groups
+	existingGroups, _ := docktorAPI.Groups().FindAllByIDs(groupsIDs)
+
+	// Get their ids only
+	for _, g := range existingGroups {
+		existingGroupIDs = append(existingGroupIDs, g.ID)
+	}
+
+	return existingGroupIDs
+}
+
 //Delete group into docktor
 func (g *Groups) Delete(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)

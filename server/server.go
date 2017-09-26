@@ -148,9 +148,9 @@ func New() {
 			// No "isAdmin" middleware on users because users can delete/modify themselves
 			// Rights are implemented in each controller
 			usersAPI.GET("", usersC.GetAll)
-			userAPI := usersAPI.Group("/:id")
+			userAPI := usersAPI.Group("/:userID")
 			{
-				userAPI.Use(isValidID("id"))
+				userAPI.Use(isValidID("userID"))
 				userAPI.GET("", usersC.Get, users.RetrieveUser)
 				userAPI.DELETE("", usersC.Delete)
 				userAPI.PUT("", usersC.Update)
