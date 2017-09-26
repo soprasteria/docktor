@@ -7,6 +7,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+// variableNamePattern is the pattern for Unix variables: a string of at least one character and max 200, and contains alphanum and underscore characters
+// Matches with AVAR, A_VAR, aVAR9...
 const variableNamePattern = `^[a-zA-Z0-9_]{1,200}$`
 
 // Variable like environment variables (GID of user for example)

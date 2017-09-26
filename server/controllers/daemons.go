@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/labstack/echo"
 	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/daemons"
@@ -23,7 +25,8 @@ func (d *Daemons) GetAll(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
 	daemons, err := docktorAPI.Daemons().FindAll()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Error while retreiving all daemons")
+		log.WithError(err).Error("Unable to get all daemons")
+		return c.String(http.StatusInternalServerError, "Unable to get all daemons because of technical error. Retry later.")
 	}
 	return c.JSON(http.StatusOK, daemons)
 }
@@ -32,9 +35,9 @@ func (d *Daemons) GetAll(c echo.Context) error {
 func (d *Daemons) Save(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
 	var daemon types.Daemon
-	err := c.Bind(&daemon)
-	if err != nil {
-		return c.String(http.StatusBadRequest, fmt.Sprintf("Unable to parse Daemon received from client: %v", err))
+	if err := c.Bind(&daemon); err != nil {
+		log.WithError(err).Error("Unable to bind daemon to save")
+		return c.String(http.StatusBadRequest, "Unable to parse daemon received from client")
 	}
 
 	// Update fields
@@ -46,12 +49,14 @@ func (d *Daemons) Save(c echo.Context) error {
 	} else {
 		// Existing daemon, search for it and update read-only fields
 		daemon.ID = bson.ObjectIdHex(id)
-		d, errr := docktorAPI.Daemons().FindByIDBson(daemon.ID)
-		if errr != nil {
-			if errr == mgo.ErrNotFound {
-				return c.String(http.StatusBadRequest, fmt.Sprint("Daemon does not exist"))
+		d, err := docktorAPI.Daemons().FindByIDBson(daemon.ID)
+		if err != nil {
+			if err == mgo.ErrNotFound {
+				log.WithError(err).Warnf("Tried to save a daemon that does not exist: %v", daemon.ID)
+				return c.String(http.StatusBadRequest, "Daemon does not exist")
 			}
-			return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to find daemon. Retry later : %s", errr))
+			log.WithError(err).Errorf("Unable to find daemon because of unexpected error : %v", daemon.ID)
+			return c.String(http.StatusInternalServerError, "Unable to find daemon because of technical error. Retry later.")
 		}
 		daemon.Created = d.Created
 	}
@@ -63,21 +68,29 @@ func (d *Daemons) Save(c echo.Context) error {
 	daemon.Updated = time.Now()
 
 	// Validate fields from validator tags for common types
-	if err = c.Validate(daemon); err != nil {
+	if err := c.Validate(daemon); err != nil {
+		log.WithError(err).Errorf("Unable to save daemon because some fields are not valid: %v", daemon.ID)
 		return c.String(http.StatusBadRequest, fmt.Sprintf("Some fields of daemon are not valid: %v", err))
 	}
 
 	// Validate fields that cannot be validated by validator engine
-	if err = daemon.Validate(); err != nil {
+	if err := daemon.Validate(); err != nil {
+		log.WithError(err).Errorf("Unable to save daemon because some fields are not valid: %v", daemon.ID)
 		return c.String(http.StatusBadRequest, fmt.Sprintf("Some fields of daemon are not valid: %v", err))
 	}
 
 	// Check that daemon site exists
-	if _, err = docktorAPI.Sites().FindByIDBson(daemon.Site); err != nil {
-		if err == mgo.ErrNotFound {
-			return c.String(http.StatusBadRequest, fmt.Sprint("Site does not exist"))
+	if _, err := docktorAPI.Sites().FindByIDBson(daemon.Site); err != nil {
+		loginfo := log.Fields{
+			"site":   daemon.Site,
+			"daemon": daemon.ID,
 		}
-		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to check if site exist. Retry later : %s", err))
+		if err == mgo.ErrNotFound {
+			log.WithError(err).WithFields(loginfo).Warnf("Tried to save a daemon with given site but site does not exist")
+			return c.String(http.StatusBadRequest, "Site does not exist")
+		}
+		log.WithError(err).WithFields(loginfo).Errorf("Tried to save a daemon with given site but unexpected error when fetching site")
+		return c.String(http.StatusInternalServerError, "Unable to check if site exist. Retry later.")
 	}
 
 	// Keep only existing tags
@@ -85,7 +98,8 @@ func (d *Daemons) Save(c echo.Context) error {
 
 	res, err := docktorAPI.Daemons().Save(daemon)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Sprintf("Error while saving daemon: %v", err))
+		log.WithError(err).Errorf("Unexpected error when saving daemon %v", daemon.ID)
+		return c.String(http.StatusInternalServerError, "Unable to save daemon because of technical error. Retry later")
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -100,7 +114,8 @@ func (d *Daemons) Delete(c echo.Context) error {
 
 	res, err := docktorAPI.Daemons().Delete(bson.ObjectIdHex(id))
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Sprintf("Error while remove daemon: %v", err))
+		log.WithError(err).Errorf("Unexpected error when deleting daemon %v", id)
+		return c.String(http.StatusInternalServerError, "Unable to delete daemon because of technical error. Retry later.")
 	}
 	return c.String(http.StatusOK, res.Hex())
 }
@@ -119,7 +134,8 @@ func (d *Daemons) GetInfo(c echo.Context) error {
 
 	infos, err := daemons.GetInfo(daemon, redisClient, forceParam == "true")
 	if err != nil {
-		return c.String(http.StatusBadRequest, err.Error())
+		log.WithError(err).Errorf("Unexpected error when getting info/status from daemon %v", daemon.ID)
+		return c.String(http.StatusBadRequest, "Unable to get daemon info because of technical error. Retry later.")
 	}
 	return c.JSON(http.StatusOK, infos)
 }

@@ -7,7 +7,8 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-const volumeNamePattern = `^[^\0]+$`
+// volumeNamePattern matches Unix and Windows folder paths, meaning no line returns or no zero characters.
+const volumeNamePattern = `^[^\0\n]+$`
 
 // Rights defines the volume rights
 type Rights string
