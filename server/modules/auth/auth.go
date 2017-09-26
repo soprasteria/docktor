@@ -189,8 +189,7 @@ func passwordWithPepper(password string) string {
 	return password + viper.GetString("auth.bcrypt-pepper")
 }
 
-// ResetPasswordUser resets the password of the user
-// At the end of this method, user won't be able to authenticate again until a new password is set
+// IsPasswordUserResetable checks whether the password can be reset or not
 func (a *Authentication) IsPasswordUserResetable(username string) (types.User, error) {
 	user, err := a.Docktor.Users().Find(username)
 	if err != nil {
