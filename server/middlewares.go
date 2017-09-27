@@ -8,9 +8,9 @@ import (
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
-	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/auth"
 	"github.com/soprasteria/docktor/server/modules/users"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	"github.com/spf13/viper"
 	"gopkg.in/mgo.v2/bson"
@@ -34,7 +34,7 @@ func redisCache(client *redis.Client) echo.MiddlewareFunc {
 
 func docktorAPI(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		dock, err := models.Get()
+		dock, err := storage.Get()
 		if err != nil {
 			c.Error(err)
 		}
@@ -92,7 +92,7 @@ func getAuhenticatedUser(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		// Get api from context
 		userToken := c.Get("user-token").(*jwt.Token)
-		docktorAPI := c.Get("api").(*models.Docktor)
+		docktorAPI := c.Get("api").(*storage.Docktor)
 
 		// Parse the token
 		claims := userToken.Claims.(*auth.MyCustomClaims)

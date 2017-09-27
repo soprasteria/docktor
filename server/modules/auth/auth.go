@@ -7,7 +7,7 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	log "github.com/sirupsen/logrus"
-	"github.com/soprasteria/docktor/server/models"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	"github.com/spf13/viper"
 	"golang.org/x/crypto/bcrypt"
@@ -34,7 +34,7 @@ var (
 
 // Authentication contains all APIs entrypoints needed for authentication
 type Authentication struct {
-	Docktor *models.Docktor
+	Docktor *storage.Docktor
 	LDAP    *LDAP
 }
 

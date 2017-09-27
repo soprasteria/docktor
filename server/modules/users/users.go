@@ -6,14 +6,14 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
-	"github.com/soprasteria/docktor/server/models"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	"gopkg.in/mgo.v2/bson"
 )
 
 // Rest contains APIs entrypoints needed for accessing users
 type Rest struct {
-	Docktor *models.Docktor
+	Docktor *storage.Docktor
 }
 
 // UserRest contains data of user, amputed from sensible data

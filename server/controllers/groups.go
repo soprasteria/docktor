@@ -7,9 +7,9 @@ import (
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
-	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/daemons"
 	"github.com/soprasteria/docktor/server/modules/users"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -21,7 +21,7 @@ type Groups struct {
 
 //GetAll groups from docktor
 func (g *Groups) GetAll(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	groups, err := docktorAPI.Groups().FindAll()
 	if err != nil {
 		log.WithError(err).Error("Unable to get all groups")
@@ -32,7 +32,7 @@ func (g *Groups) GetAll(c echo.Context) error {
 
 //Save group into docktor
 func (g *Groups) Save(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	var group types.Group
 	if err := c.Bind(&group); err != nil {
 		log.WithError(err).Error("Unable to bind group to save")
@@ -89,7 +89,7 @@ func (g *Groups) Save(c echo.Context) error {
 
 // existingMembers return members filters by existing ones
 // Checks wether the user actually exists in database
-func existingMembers(docktorAPI *models.Docktor, members types.Members) types.Members {
+func existingMembers(docktorAPI *storage.Docktor, members types.Members) types.Members {
 
 	existingMembers := types.Members{}
 
@@ -111,7 +111,7 @@ func existingMembers(docktorAPI *models.Docktor, members types.Members) types.Me
 
 // existingGroups return groups filtered by existing ones
 // Checks wether the group actually exists in database
-func existingGroups(docktorAPI *models.Docktor, groupsIDs []bson.ObjectId) []bson.ObjectId {
+func existingGroups(docktorAPI *storage.Docktor, groupsIDs []bson.ObjectId) []bson.ObjectId {
 
 	existingGroupIDs := []bson.ObjectId{}
 
@@ -128,7 +128,7 @@ func existingGroups(docktorAPI *models.Docktor, groupsIDs []bson.ObjectId) []bso
 
 // existingFileSystems return filesystems filtered by existing ones
 // Checks wether the filesystem daemon actually exists in database
-func existingFileSystems(docktorAPI *models.Docktor, fileSystems types.FileSystems) types.FileSystems {
+func existingFileSystems(docktorAPI *storage.Docktor, fileSystems types.FileSystems) types.FileSystems {
 
 	existingFileSystems := types.FileSystems{}
 	daemonIDs := []bson.ObjectId{}
@@ -153,7 +153,7 @@ func existingFileSystems(docktorAPI *models.Docktor, fileSystems types.FileSyste
 
 //Delete group into docktor
 func (g *Groups) Delete(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	id := c.Param("groupID")
 
 	// TODO : Don't delete group if at least a service is deployed somewhere.
@@ -178,7 +178,7 @@ func (g *Groups) GetTags(c echo.Context) error {
 	// withServices, _ := strconv.ParseBool(c.QueryParam("services"))     // Get all tags from a given daemon
 	// withcontainers, _ := strconv.ParseBool(c.QueryParam("containers")) // Get all tags from a given Users
 	group := c.Get("group").(types.Group)
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	tagIds := group.Tags
 
 	// TODO : enable it when containers and services are used again.
@@ -218,7 +218,7 @@ func (g *Groups) GetTags(c echo.Context) error {
 // GetMembers get all users who are members of the group
 func (g *Groups) GetMembers(c echo.Context) error {
 	group := c.Get("group").(types.Group)
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 
 	ur := users.Rest{Docktor: docktorAPI}
 	users, err := ur.GetUsersFromIds(group.Members.GetUsers())
@@ -235,7 +235,7 @@ func (g *Groups) GetMembers(c echo.Context) error {
 func (g *Groups) GetDaemons(c echo.Context) error {
 
 	group := c.Get("group").(types.Group)
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 
 	var daemonIds []bson.ObjectId
 
@@ -260,7 +260,7 @@ func (g *Groups) GetDaemons(c echo.Context) error {
 // GetServices get all services used on the group (service from containers)
 func (g *Groups) GetServices(c echo.Context) error {
 	group := c.Get("group").(types.Group)
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 
 	serviceIds := []bson.ObjectId{}
 

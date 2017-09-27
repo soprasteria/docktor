@@ -8,9 +8,9 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/labstack/echo"
-	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/auth"
 	"github.com/soprasteria/docktor/server/modules/daemons"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	"github.com/soprasteria/docktor/server/utils"
 	mgo "gopkg.in/mgo.v2"
@@ -23,7 +23,7 @@ type Daemons struct {
 
 // GetAll daemons from docktor
 func (d *Daemons) GetAll(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	daemons, err := docktorAPI.Daemons().FindAll()
 	if err != nil {
 		log.WithError(err).Error("Unable to get all daemons")
@@ -34,7 +34,7 @@ func (d *Daemons) GetAll(c echo.Context) error {
 
 //Save daemon into docktor
 func (d *Daemons) Save(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	var daemon types.Daemon
 	if err := c.Bind(&daemon); err != nil {
 		log.WithError(err).Error("Unable to bind daemon to save")
@@ -107,7 +107,7 @@ func (d *Daemons) Save(c echo.Context) error {
 
 //Delete daemon into docktor
 func (d *Daemons) Delete(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	id := c.Param("daemonID")
 
 	// TODO: return error when daemon is already used in another service/container

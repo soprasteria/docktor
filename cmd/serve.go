@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/soprasteria/docktor/server"
-	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/email"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -15,7 +15,7 @@ var serveCmd = &cobra.Command{
 	Long:  `Docktor server will listen on 0.0.0.0:8080`,
 	Run: func(cmd *cobra.Command, args []string) {
 		email.InitSMTPConfiguration()
-		models.Connect()
+		storage.Connect()
 		server.New()
 	},
 }

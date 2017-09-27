@@ -9,7 +9,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/labstack/echo"
-	"github.com/soprasteria/docktor/server/models"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -21,7 +21,7 @@ type Sites struct {
 
 //GetAll sites from docktor
 func (s *Sites) GetAll(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	sites, err := docktorAPI.Sites().FindAll()
 	if err != nil {
 		log.WithError(err).Error("Unable to get all sites")
@@ -32,7 +32,7 @@ func (s *Sites) GetAll(c echo.Context) error {
 
 //Save site into docktor
 func (s *Sites) Save(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	var site types.Site
 	err := c.Bind(&site)
 
@@ -80,7 +80,7 @@ func (s *Sites) Save(c echo.Context) error {
 
 //Delete site into docktor
 func (s *Sites) Delete(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	id := c.Param("siteID")
 
 	// Don't delete the site if it's already used in another daemon.

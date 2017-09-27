@@ -6,14 +6,14 @@ import (
 
 	"gopkg.in/mgo.v2/bson"
 
-	"github.com/soprasteria/docktor/server/models"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	"github.com/tealeg/xlsx"
 )
 
 // Export contains APIs entrypoints needed for accessing users
 type Export struct {
-	Docktor *models.Docktor
+	Docktor *storage.Docktor
 }
 
 //ExportAll exports all business data as a file

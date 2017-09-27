@@ -7,9 +7,9 @@ import (
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
-	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/auth"
 	"github.com/soprasteria/docktor/server/modules/users"
+	"github.com/soprasteria/docktor/server/storage"
 )
 
 // ErrNotAuthorized is an error when someone is trying to access unauthorized ressource for a given role
@@ -27,7 +27,7 @@ type Token struct {
 
 func newAuthAPI(c echo.Context) auth.Authentication {
 	// Handle APIs from Echo context
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	ldapAPI := c.Get("ldap")
 	var ldap *auth.LDAP
 	if ldapAPI != nil {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
-	"github.com/soprasteria/docktor/server/models"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -22,7 +22,7 @@ type Tags struct {
 
 //GetAll tags from docktor
 func (s *Tags) GetAll(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	tags, err := docktorAPI.Tags().FindAll()
 	if err != nil {
 		log.WithError(err).Error("Unable to get all tags")
@@ -33,7 +33,7 @@ func (s *Tags) GetAll(c echo.Context) error {
 
 //Save or update tag into docktor
 func (s *Tags) Save(c echo.Context) error {
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 
 	// Unserialize the tag
 	var tagToSave types.Tag
@@ -97,7 +97,7 @@ func (s *Tags) Save(c echo.Context) error {
 //Delete tag into docktor
 func (s *Tags) Delete(c echo.Context) error {
 
-	docktorAPI := c.Get("api").(*models.Docktor)
+	docktorAPI := c.Get("api").(*storage.Docktor)
 	id := c.Param("tagID")
 
 	collections := []types.UseTags{
@@ -131,7 +131,7 @@ func (s *Tags) Delete(c echo.Context) error {
 
 // existingTags return tags filtered by existing ones
 // Checks wether the tag actually exists in database
-func existingTags(docktorAPI *models.Docktor, tagsIds []bson.ObjectId) []bson.ObjectId {
+func existingTags(docktorAPI *storage.Docktor, tagsIds []bson.ObjectId) []bson.ObjectId {
 
 	existingTagsIDs := []bson.ObjectId{}
 

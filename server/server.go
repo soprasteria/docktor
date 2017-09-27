@@ -11,12 +11,12 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/soprasteria/docktor/server/controllers"
-	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/auth"
 	"github.com/soprasteria/docktor/server/modules/daemons"
 	"github.com/soprasteria/docktor/server/modules/groups"
 	"github.com/soprasteria/docktor/server/modules/services"
 	"github.com/soprasteria/docktor/server/modules/users"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	"github.com/spf13/viper"
 )
@@ -185,14 +185,14 @@ func New() {
 }
 
 func createIndexes() {
-	dock, err := models.Get()
+	dock, err := storage.Get()
 	if err != nil {
 		log.WithError(err).Fatal("Can't ensure that indexes have been created")
 		return
 	}
 	defer dock.Close()
 	for _, db := range dock.Collections() {
-		if dbWithIndex, ok := db.(models.IsCollectionWithIndexes); ok {
+		if dbWithIndex, ok := db.(storage.IsCollectionWithIndexes); ok {
 			log.Infof("Ensuring indexes creating for '%v' collection", db.GetCollectionName())
 			err := dbWithIndex.CreateIndexes()
 			if err != nil {
