@@ -102,44 +102,44 @@ func (e *Export) addGroupSheet(file *xlsx.File, groups []types.Group, daemons []
 	// Add data
 	// TODO : add tags when tags are on groups
 	data := [][]interface{}{}
-	for _, group := range groups {
-		if len(group.Containers) == 0 {
-			// Create a group line with empty service when no container created for group
-			data = append(data, []interface{}{
-				group.ID.Hex(),
-				group.Title,
-				group.Description,
-				group.Created,
-			})
-		} else {
-			for _, container := range group.Containers {
-				// Search in the slice of daemons already fetched instead of requesting the database for performance purpose
-				daemon, err := findDaemon(container.DaemonID, daemons)
-				daemonName := "Unknown"
-				siteName := daemonName
-				if err == nil {
-					daemonName = daemon.Name
-					site, err := findSite(daemon.Site, sites)
-					if err == nil {
-						siteName = site.Title
-					}
-				}
+	// for _, group := range groups {
+	// 	if len(group.Containers) == 0 {
+	// 		// Create a group line with empty service when no container created for group
+	// 		data = append(data, []interface{}{
+	// 			group.ID.Hex(),
+	// 			group.Title,
+	// 			group.Description,
+	// 			group.Created,
+	// 		})
+	// 	} else {
+	// 		for _, container := range group.Containers {
+	// 			// Search in the slice of daemons already fetched instead of requesting the database for performance purpose
+	// 			daemon, err := findDaemon(container.DaemonID, daemons)
+	// 			daemonName := "Unknown"
+	// 			siteName := daemonName
+	// 			if err == nil {
+	// 				daemonName = daemon.Name
+	// 				site, err := findSite(daemon.Site, sites)
+	// 				if err == nil {
+	// 					siteName = site.Title
+	// 				}
+	// 			}
 
-				data = append(data, []interface{}{
-					group.ID.Hex(),
-					group.Title,
-					group.Description,
-					group.Created,
-					container.ServiceTitle,
-					container.Image,
-					container.Name,
-					container.DaemonID,
-					daemonName,
-					siteName,
-				})
-			}
-		}
-	}
+	// 			data = append(data, []interface{}{
+	// 				group.ID.Hex(),
+	// 				group.Title,
+	// 				group.Description,
+	// 				group.Created,
+	// 				container.ServiceTitle,
+	// 				container.Image,
+	// 				container.Name,
+	// 				container.DaemonID,
+	// 				daemonName,
+	// 				siteName,
+	// 			})
+	// 		}
+	// 	}
+	// }
 	table.AppendBulk(data)
 
 	return sheet, nil
