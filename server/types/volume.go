@@ -56,7 +56,7 @@ var volumeNameRegex = regexp.MustCompile(volumeNamePattern)
 
 // Validate checks that the volume is valid.
 // Volume is valid when :
-// Internal volume is not empty and does not contains the \0 character,
+// Internal volume is not empty and does not contains the \0 and \n character,
 // External does not contains the \0 character and
 // Rights are either ro or rw
 func (v Volume) Validate() error {
