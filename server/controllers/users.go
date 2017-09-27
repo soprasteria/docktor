@@ -34,7 +34,7 @@ func (u *Users) GetAll(c echo.Context) error {
 // Only admin and current user is able to update a user
 func (u *Users) Update(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
-	authenticatedUser, err := u.getUserFromToken(c)
+	authenticatedUser, err := getUserFromToken(c)
 	if err != nil {
 		return c.String(http.StatusUnauthorized, auth.ErrInvalidCredentials.Error())
 	}
@@ -111,7 +111,7 @@ func (u *Users) Delete(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
 	id := c.Param("userID")
 
-	authenticatedUser, err := u.getUserFromToken(c)
+	authenticatedUser, err := getUserFromToken(c)
 	if err != nil {
 		return c.String(http.StatusForbidden, auth.ErrInvalidCredentials.Error())
 	}
@@ -154,7 +154,7 @@ func (u *Users) ChangePassword(c echo.Context) error {
 		return c.String(http.StatusBadRequest, "Body not recognized")
 	}
 
-	authenticatedUser, err := u.getUserFromToken(c)
+	authenticatedUser, err := getUserFromToken(c)
 	if err != nil {
 		return c.String(http.StatusForbidden, auth.ErrInvalidCredentials.Error())
 	}
@@ -188,7 +188,7 @@ func (u *Users) ChangePassword(c echo.Context) error {
 
 // Profile returns the profile of the connecter user
 func (u *Users) Profile(c echo.Context) error {
-	user, err := u.getUserFromToken(c)
+	user, err := getUserFromToken(c)
 	if err != nil {
 		return c.String(http.StatusUnauthorized, auth.ErrInvalidCredentials.Error())
 	}
@@ -203,7 +203,7 @@ func (u *Users) Get(c echo.Context) error {
 	return c.JSON(http.StatusOK, user)
 }
 
-func (u *Users) getUserFromToken(c echo.Context) (users.UserRest, error) {
+func getUserFromToken(c echo.Context) (users.UserRest, error) {
 	docktorAPI := c.Get("api").(*models.Docktor)
 	userToken := c.Get("user-token").(*jwt.Token)
 

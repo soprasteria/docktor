@@ -132,13 +132,13 @@ func New() {
 			groupsAPI.POST("/new", groupsC.Save, hasRole(types.AdminRole))
 			groupAPI := groupsAPI.Group("/:groupID")
 			{
-				groupAPI.Use(isValidID("groupID"), hasRole(types.AdminRole))
+				groupAPI.Use(isValidID("groupID"))
 				groupAPI.GET("", groupsC.Get, groups.RetrieveGroup)
 				groupAPI.GET("/tags", groupsC.GetTags, groups.RetrieveGroup)
 				groupAPI.GET("/members", groupsC.GetMembers, groups.RetrieveGroup)
 				groupAPI.GET("/daemons", groupsC.GetDaemons, groups.RetrieveGroup)
 				groupAPI.GET("/services", groupsC.GetServices, groups.RetrieveGroup)
-				groupAPI.DELETE("", groupsC.Delete)
+				groupAPI.DELETE("", groupsC.Delete, hasRole(types.AdminRole))
 				groupAPI.PUT("", groupsC.Save)
 			}
 		}

@@ -3,13 +3,15 @@ package controllers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
+	"time"
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
 	"github.com/soprasteria/docktor/server/models"
+	"github.com/soprasteria/docktor/server/modules/daemons"
 	"github.com/soprasteria/docktor/server/modules/users"
 	"github.com/soprasteria/docktor/server/types"
+	mgo "gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
 
@@ -22,7 +24,8 @@ func (g *Groups) GetAll(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
 	groups, err := docktorAPI.Groups().FindAll()
 	if err != nil {
-		return c.String(http.StatusInternalServerError, "Error while retreiving all groups")
+		log.WithError(err).Error("Unable to get all groups")
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to get all daemons because of technical error: %v. Retry later.", err))
 	}
 	return c.JSON(http.StatusOK, groups)
 }
@@ -34,22 +37,54 @@ func (g *Groups) Save(c echo.Context) error {
 	err := c.Bind(&group)
 
 	if err != nil {
-		return c.String(http.StatusBadRequest, fmt.Sprintf("Error while binding group: %v", err))
+		log.WithError(err).Error("Unable to bind group to save")
+		return c.String(http.StatusBadRequest, "Unable to parse group received from client")
 	}
 
 	// If the ID is empty, it's a creation, so generate an object ID
-	if group.ID.Hex() == "" {
+	id := c.Param("groupID")
+	if id == "" {
+		// New group to create
 		group.ID = bson.NewObjectId()
+		group.Created = time.Now()
+	} else {
+		// Existing group
+		group.ID = bson.ObjectIdHex(id)
+		g, err := docktorAPI.Groups().FindByIDBson(group.ID)
+		if err != nil {
+			if err == mgo.ErrNotFound {
+				log.WithError(err).Warnf("Tried to save a group that does not exist: %v", group.ID)
+				return c.String(http.StatusBadRequest, "Group does not exist")
+			}
+			log.WithError(err).Errorf("Unable to find group because of unexpected error : %v", group.ID)
+			return c.String(http.StatusInternalServerError, "Unable to find group because of technical error. Retry later.")
+		}
+		group.Created = g.Created
 	}
 
-	// Filters the members by existing users
-	// This way, group will autofix when user is deleted
-	existingMembers := existingMembers(docktorAPI, group.Members)
-	group.Members = existingMembers
+	// Validate fields from validator tags for common types
+	if err := c.Validate(group); err != nil {
+		log.WithError(err).Errorf("Unable to save group %v because some fields are not valid", group.ID)
+		return c.String(http.StatusBadRequest, fmt.Sprintf("Some fields of group are not valid: %v", err))
+	}
+
+	// Validate fields that cannot be validated by validator engine
+	if err := group.Validate(); err != nil {
+		log.WithError(err).Errorf("Unable to save group %v because some fields are not valid", group.ID)
+		return c.String(http.StatusBadRequest, fmt.Sprintf("Some fields of group are not valid: %v", err))
+	}
+
+	// Keep only existing and remove duplicates of external collections
+	// Used to clean the group of old data when saving
+	group.Members = existingMembers(docktorAPI, group.Members)
+	group.Tags = existingTags(docktorAPI, group.Tags)
+	group.FileSystems = existingFileSystems(docktorAPI, group.FileSystems)
+	group.Updated = time.Now()
 
 	res, err := docktorAPI.Groups().Save(group)
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Sprintf("Error while saving group: %v", err))
+		log.WithError(err).Errorf("Unexpected error when saving group %v", group.ID)
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to save group because of technical error: %v. Retry later.", err))
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -58,7 +93,7 @@ func (g *Groups) Save(c echo.Context) error {
 // Checks wether the user actually exists in database
 func existingMembers(docktorAPI *models.Docktor, members types.Members) types.Members {
 
-	var existingMembers types.Members
+	existingMembers := types.Members{}
 
 	// Get all real users from members.
 	existingUsers, _ := docktorAPI.Users().FindAllByIDs(members.GetUsers())
@@ -93,13 +128,42 @@ func existingGroups(docktorAPI *models.Docktor, groupsIDs []bson.ObjectId) []bso
 	return existingGroupIDs
 }
 
+// existingFileSystems return filesystems filtered by existing ones
+// Checks wether the filesystem daemon actually exists in database
+func existingFileSystems(docktorAPI *models.Docktor, fileSystems types.FileSystems) types.FileSystems {
+
+	existingFileSystems := types.FileSystems{}
+	daemonIDs := []bson.ObjectId{}
+	for _, r := range fileSystems {
+		daemonIDs = append(daemonIDs, r.Daemon)
+	}
+
+	// Get all real tags
+	existingDaemons, _ := docktorAPI.Daemons().FindAllByIDs(daemonIDs)
+
+	// Get existing filesystems only
+	for _, daemon := range existingDaemons {
+		for _, fs := range fileSystems {
+			if daemon.ID == fs.Daemon {
+				existingFileSystems = append(existingFileSystems, fs)
+			}
+		}
+	}
+
+	return existingFileSystems
+}
+
 //Delete group into docktor
 func (g *Groups) Delete(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
 	id := c.Param("groupID")
+
+	// TODO : Don't delete group if at least a service is deployed somewhere.
+
 	res, err := docktorAPI.Groups().Delete(bson.ObjectIdHex(id))
 	if err != nil {
-		return c.String(http.StatusInternalServerError, fmt.Sprintf("Error while remove group: %v", err))
+		log.WithError(err).Errorf("Unexpected error when deleting group %v", id)
+		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to delete group because of technical error: %v. Retry later.", err))
 	}
 	return c.String(http.StatusOK, res.Hex())
 }
@@ -113,35 +177,36 @@ func (g *Groups) Get(c echo.Context) error {
 // GetTags get all tags from a given group
 // It is able to get get tags from sub entities (like containers and services if needed)
 func (g *Groups) GetTags(c echo.Context) error {
-	withServices, _ := strconv.ParseBool(c.QueryParam("services"))     // Get all tags from a given daemon
-	withcontainers, _ := strconv.ParseBool(c.QueryParam("containers")) // Get all tags from a given Users
+	// withServices, _ := strconv.ParseBool(c.QueryParam("services"))     // Get all tags from a given daemon
+	// withcontainers, _ := strconv.ParseBool(c.QueryParam("containers")) // Get all tags from a given Users
 	group := c.Get("group").(types.Group)
 	docktorAPI := c.Get("api").(*models.Docktor)
 	tagIds := group.Tags
 
+	// TODO : enable it when containers and services are used again.
 	// Get also tags from container instances of group
-	if withcontainers {
-		for _, c := range group.Containers {
-			tagIds = append(tagIds, c.Tags...)
-		}
-	}
-	// Get also tags from the type of containers (= service)
-	if withServices {
-		var serviceIds []bson.ObjectId
-		// Get services from containers
-		for _, c := range group.Containers {
-			serviceIds = append(serviceIds, c.ServiceID)
-		}
-		services, err := docktorAPI.Services().FindAllByIDs(serviceIds)
-		if err != nil {
-			log.WithError(err).WithField("group", group.ID).WithField("services.ids", serviceIds).Error("Can't get tags of service")
-			return c.JSON(http.StatusInternalServerError, "Incorrect data. Contact your administrator")
-		}
-		// Get tags from services
-		for _, s := range services {
-			tagIds = append(tagIds, s.Tags...)
-		}
-	}
+	// if withcontainers {
+	// 	for _, c := range group.Containers {
+	// 		tagIds = append(tagIds, c.Tags...)
+	// 	}
+	// }
+	// // Get also tags from the type of containers (= service)
+	// if withServices {
+	// 	var serviceIds []bson.ObjectId
+	// 	// Get services from containers
+	// 	for _, c := range group.Containers {
+	// 		serviceIds = append(serviceIds, c.ServiceID)
+	// 	}
+	// 	services, err := docktorAPI.Services().FindAllByIDs(serviceIds)
+	// 	if err != nil {
+	// 		log.WithError(err).WithField("group", group.ID).WithField("services.ids", serviceIds).Error("Can't get tags of service")
+	// 		return c.JSON(http.StatusInternalServerError, "Incorrect data. Contact your administrator")
+	// 	}
+	// 	// Get tags from services
+	// 	for _, s := range services {
+	// 		tagIds = append(tagIds, s.Tags...)
+	// 	}
+	// }
 
 	tags, err := docktorAPI.Tags().FindAllByIDs(tagIds)
 	if err != nil {
@@ -179,17 +244,19 @@ func (g *Groups) GetDaemons(c echo.Context) error {
 	for _, fs := range group.FileSystems {
 		daemonIds = append(daemonIds, fs.Daemon)
 	}
-	for _, c := range group.Containers {
-		daemonIds = append(daemonIds, c.DaemonID)
-	}
 
-	daemons, err := docktorAPI.Daemons().FindAllByIDs(daemonIds)
+	// TODO : enable it when containers and services are used again.
+	// for _, c := range group.Containers {
+	// 	daemonIds = append(daemonIds, c.DaemonID)
+	// }
+
+	ds, err := docktorAPI.Daemons().FindAllByIDs(daemonIds)
 	if err != nil {
 		log.WithError(err).WithField("group", group.ID).WithField("daemons.ids", daemonIds).Error("Can't get daemons of group")
 		return c.JSON(http.StatusInternalServerError, "Incorrect data. Contact your administrator")
 	}
 
-	return c.JSON(http.StatusOK, daemons)
+	return c.JSON(http.StatusOK, daemons.GetDaemonsRest(ds))
 }
 
 // GetServices get all services used on the group (service from containers)
@@ -197,10 +264,12 @@ func (g *Groups) GetServices(c echo.Context) error {
 	group := c.Get("group").(types.Group)
 	docktorAPI := c.Get("api").(*models.Docktor)
 
-	var serviceIds []bson.ObjectId
-	for _, c := range group.Containers {
-		serviceIds = append(serviceIds, c.ServiceID)
-	}
+	serviceIds := []bson.ObjectId{}
+
+	// TODO : enable it when containers and services are used again.
+	// for _, c := range group.Containers {
+	// 	serviceIds = append(serviceIds, c.ServiceID)
+	// }
 
 	services, err := docktorAPI.Services().FindAllByIDs(serviceIds)
 	if err != nil {

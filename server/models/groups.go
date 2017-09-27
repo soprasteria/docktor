@@ -1,6 +1,8 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/soprasteria/docktor/server/types"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -56,6 +58,9 @@ type GroupsRepo interface {
 
 	// GetCollectionName returns the name of the collection
 	GetCollectionName() string
+
+	// CreateIndexes creates Index
+	CreateIndexes() error
 }
 
 // DefaultGroupsRepo is the repository for groups
@@ -73,6 +78,15 @@ func (r *DefaultGroupsRepo) GetCollectionName() string {
 	return r.coll.FullName
 }
 
+// CreateIndexes creates Index
+func (r *DefaultGroupsRepo) CreateIndexes() error {
+	return r.coll.EnsureIndex(mgo.Index{
+		Key:    []string{"title"},
+		Unique: true,
+		Name:   "group_title_unique",
+	})
+}
+
 // Drop drops the content of the collection
 func (r *DefaultGroupsRepo) Drop() error {
 	return r.coll.DropCollection()
@@ -82,6 +96,9 @@ func (r *DefaultGroupsRepo) Drop() error {
 func (r *DefaultGroupsRepo) Save(group types.Group) (types.Group, error) {
 	newGroup := types.NewGroup(group)
 	_, err := r.coll.UpsertId(group.ID, bson.M{"$set": types.NewGroup(group)})
+	if mgo.IsDup(err) {
+		return group, fmt.Errorf("Another group exists with title '%v'", group.Title)
+	}
 	return newGroup, err
 }
 

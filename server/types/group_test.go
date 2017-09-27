@@ -26,7 +26,7 @@ func ExampleVolume_Format() {
 	// /brace/yourselves:/winter/is/coming:ro
 	// /brace/yourselves:/winter/is/coming:rw
 }
-func TestGroups(t *testing.T) {
+func TestGroupsDuplicates(t *testing.T) {
 	Convey("On Groups types", t, func() {
 		Convey("Given a list of members", func() {
 			givenMembers := types.Members{
