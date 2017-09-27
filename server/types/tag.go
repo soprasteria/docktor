@@ -83,7 +83,7 @@ type UseTags interface {
 }
 
 func removeDuplicatesTags(tags []bson.ObjectId) []bson.ObjectId {
-	var result []bson.ObjectId
+	result := []bson.ObjectId{}
 	seen := map[bson.ObjectId]bool{}
 	for _, tag := range tags {
 		if _, ok := seen[tag]; !ok {
