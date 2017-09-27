@@ -8,8 +8,8 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/labstack/echo"
-	"github.com/soprasteria/docktor/server/modules/auth"
-	"github.com/soprasteria/docktor/server/modules/daemons"
+	"github.com/soprasteria/docktor/server/controllers/auth"
+	"github.com/soprasteria/docktor/server/controllers/daemons"
 	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	"github.com/soprasteria/docktor/server/utils"

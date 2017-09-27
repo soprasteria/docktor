@@ -7,8 +7,8 @@ import (
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
-	"github.com/soprasteria/docktor/server/modules/auth"
-	"github.com/soprasteria/docktor/server/modules/users"
+	"github.com/soprasteria/docktor/server/controllers/auth"
+	"github.com/soprasteria/docktor/server/controllers/users"
 	"github.com/soprasteria/docktor/server/storage"
 )
 

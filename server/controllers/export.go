@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
-	"github.com/soprasteria/docktor/server/modules/export"
+	"github.com/soprasteria/docktor/server/controllers/export"
 	"github.com/soprasteria/docktor/server/storage"
 )
 

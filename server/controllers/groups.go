@@ -7,8 +7,8 @@ import (
 
 	"github.com/labstack/echo"
 	log "github.com/sirupsen/logrus"
-	"github.com/soprasteria/docktor/server/modules/daemons"
-	"github.com/soprasteria/docktor/server/modules/users"
+	"github.com/soprasteria/docktor/server/controllers/daemons"
+	"github.com/soprasteria/docktor/server/controllers/users"
 	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	mgo "gopkg.in/mgo.v2"

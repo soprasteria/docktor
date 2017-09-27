@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/soprasteria/docktor/server"
-	"github.com/soprasteria/docktor/server/modules/email"
+	"github.com/soprasteria/docktor/server/controllers/email"
 	"github.com/soprasteria/docktor/server/storage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
