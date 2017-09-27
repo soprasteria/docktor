@@ -8,6 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 
 	"github.com/labstack/echo"
+	"github.com/soprasteria/dad/server/auth"
 	"github.com/soprasteria/docktor/server/models"
 	"github.com/soprasteria/docktor/server/modules/daemons"
 	"github.com/soprasteria/docktor/server/types"
@@ -42,7 +43,7 @@ func (d *Daemons) Save(c echo.Context) error {
 
 	// Update fields
 	id := c.Param("daemonID")
-	if daemon.ID.Hex() == "" && id == "" {
+	if id == "" {
 		// New daemon to create
 		daemon.ID = bson.NewObjectId()
 		daemon.Created = time.Now()
@@ -123,6 +124,14 @@ func (d *Daemons) Delete(c echo.Context) error {
 //Get daemon from docktor
 func (d *Daemons) Get(c echo.Context) error {
 	daemon := c.Get("daemon").(types.Daemon)
+	authenticatedUser, err := getUserFromToken(c)
+	if err != nil {
+		return c.String(http.StatusForbidden, auth.ErrInvalidCredentials.Error())
+	}
+	if !authenticatedUser.IsAdmin() {
+		// Fetch daemon, amputed of its sensible data when user is not admin
+		return c.JSON(http.StatusOK, daemons.GetDaemonRest(daemon))
+	}
 	return c.JSON(http.StatusOK, daemon)
 }
 

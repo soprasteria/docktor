@@ -15,6 +15,9 @@ const (
 	// HTTPSProtocol is the protocol for reaching a daemon with HTTPS
 	HTTPSProtocol DaemonProtocol = "https"
 
+	// Daemon name is used to override hostname of containers
+	// Meaning it has to be a valid container hostname
+	// Here, it's a alphanum + underscore authorized string with up to 200 characters
 	daemonNamePattern = `^[a-zA-Z0-9_]{1,200}$`
 )
 
