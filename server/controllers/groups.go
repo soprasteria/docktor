@@ -34,9 +34,7 @@ func (g *Groups) GetAll(c echo.Context) error {
 func (g *Groups) Save(c echo.Context) error {
 	docktorAPI := c.Get("api").(*models.Docktor)
 	var group types.Group
-	err := c.Bind(&group)
-
-	if err != nil {
+	if err := c.Bind(&group); err != nil {
 		log.WithError(err).Error("Unable to bind group to save")
 		return c.String(http.StatusBadRequest, "Unable to parse group received from client")
 	}
