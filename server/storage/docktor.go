@@ -24,7 +24,6 @@ type Session interface {
 //Client is the entrypoint of Docktor API
 type Client interface {
 	Collections() []IsCollection
-	Services() ServicesRepo
 	Groups() GroupsRepo
 	Daemons() DaemonsRepo
 	Users() UsersRepo
@@ -47,13 +46,12 @@ type IsCollectionWithIndexes interface {
 // Docktor is the implementation structure to use the API
 // It contains API accessing to services, jobs, daemons, etc. + the open session
 type Docktor struct {
-	session  Session
-	services ServicesRepo
-	groups   GroupsRepo
-	daemons  DaemonsRepo
-	users    UsersRepo
-	sites    SitesRepo
-	tags     TagsRepo
+	session Session
+	groups  GroupsRepo
+	daemons DaemonsRepo
+	users   UsersRepo
+	sites   SitesRepo
+	tags    TagsRepo
 }
 
 type appContext struct {
@@ -94,24 +92,18 @@ func Get() (Client, error) {
 	context := appContext{database}
 
 	return &Docktor{
-		services: NewServicesRepo(context.db.C("services")),
-		groups:   NewGroupsRepo(context.db.C("groups")),
-		daemons:  NewDaemonsRepo(context.db.C("daemons")),
-		users:    NewUsersRepo(context.db.C("users")),
-		sites:    NewSitesRepo(context.db.C("sites")),
-		tags:     NewTagsRepo(context.db.C("tags")),
-		session:  s,
+		groups:  NewGroupsRepo(context.db.C("groups")),
+		daemons: NewDaemonsRepo(context.db.C("daemons")),
+		users:   NewUsersRepo(context.db.C("users")),
+		sites:   NewSitesRepo(context.db.C("sites")),
+		tags:    NewTagsRepo(context.db.C("tags")),
+		session: s,
 	}, nil
 }
 
 // Close the connexion to docktor API
 func (dock *Docktor) Close() {
 	dock.session.Close()
-}
-
-// Services is the entrypoint for Services API
-func (dock *Docktor) Services() ServicesRepo {
-	return dock.services
 }
 
 // Groups is the entrypoint for Groups API
@@ -143,7 +135,6 @@ func (dock *Docktor) Tags() TagsRepo {
 func (dock *Docktor) Collections() []IsCollection {
 	return []IsCollection{
 		dock.daemons,
-		dock.services,
 		dock.groups,
 		dock.users,
 		dock.sites,

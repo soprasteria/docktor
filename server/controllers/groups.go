@@ -256,23 +256,3 @@ func (g *Groups) GetDaemons(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, daemons.GetDaemonsRest(ds))
 }
-
-// GetServices get all services used on the group (service from containers)
-func (g *Groups) GetServices(c echo.Context) error {
-	group := c.Get("group").(types.Group)
-	docktorAPI := c.Get("api").(*storage.Docktor)
-
-	serviceIds := []bson.ObjectId{}
-
-	// TODO : enable it when containers and services are used again.
-	// for _, c := range group.Containers {
-	// 	serviceIds = append(serviceIds, c.ServiceID)
-	// }
-
-	services, err := docktorAPI.Services().FindAllByIDs(serviceIds)
-	if err != nil {
-		log.WithError(err).WithField("group", group.ID).WithField("service.ids", serviceIds).Error("Can't get services of group")
-		return c.JSON(http.StatusInternalServerError, "Incorrect data. Contact your administrator")
-	}
-	return c.JSON(http.StatusOK, services)
-}

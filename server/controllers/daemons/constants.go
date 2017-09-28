@@ -9,4 +9,8 @@ const (
 
 	// DaemonInvalidInfo : information about docker daemon is invalid
 	DaemonInvalidInfo string = "Invalid daemon info"
+
+	// daemonInfoCacheKeyFormat is the key format to store Docker stats of a daemon in a cache.
+	// %s in format is meant to be the daemon id
+	daemonInfoCacheKeyFormat string = "daemon:%s:info"
 )

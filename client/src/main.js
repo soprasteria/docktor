@@ -13,8 +13,6 @@ import DaemonPage from './components/daemons/daemon/daemon.page';
 import GroupsPage from './components/groups/groups.page';
 import GroupEditPage from './components/groups/group/group.edit.page';
 import GroupViewPage from './components/groups/group/group.view.page';
-import ServicesPage from './components/services/services.page';
-import ServicePage from './components/services/service/service.page';
 import SettingsPage from './components/settings/settings.page';
 import UsersPage from './components/users/users.page';
 import UserPage from './components/users/user/user.page';
@@ -44,9 +42,6 @@ ReactDOM.render(
           <Route exact path='/groups/:id' component={requireAuthorization(GroupViewPage)} />
           <Route exact path='/groups/:id/view' component={requireAuthorization(GroupViewPage)} />
           <Route exact path='/groups/:id/edit' component={requireAuthorization(GroupEditPage, [AUTH_ADMIN_ROLE])} />
-          <Route exact path='/services' component={requireAuthorization(ServicesPage)} />
-          <Route exact path='/services/new' component={requireAuthorization(ServicePage, [AUTH_ADMIN_ROLE])} />
-          <Route exact path='/services/:id' component={requireAuthorization(ServicePage, [AUTH_ADMIN_ROLE])} />
           <Route exact path='/users' component={requireAuthorization(UsersPage)} />
           <Route exact path='/users/:id' component={requireAuthorization(UserPage, [AUTH_ADMIN_ROLE])} />
           <Route exact path='/tags' component={requireAuthorization(TagsPage, [AUTH_ADMIN_ROLE])} />

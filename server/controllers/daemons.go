@@ -110,14 +110,22 @@ func (d *Daemons) Delete(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	id := c.Param("daemonID")
 
-	// TODO: return error when daemon is already used in another service/container
-	// If it's used in a filesystem in a group, it's OK, it should be deleted when saving the group
+	// TODO: refuse delete when daemon is already used in another service/container
 
+	log.Debugf("Deleting daemon %v", id)
 	res, err := docktorAPI.Daemons().Delete(bson.ObjectIdHex(id))
 	if err != nil {
 		log.WithError(err).Errorf("Unexpected error when deleting daemon %v", id)
 		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to delete daemon because of technical error: %v. Retry later.", err))
 	}
+
+	// Deleting filesystems in groups that use this daemon
+	log.Debugf("Removing all filesystems used in groups that use daemon %v", id)
+	rmInfo, err := docktorAPI.Groups().RemoveFileSystem(bson.ObjectIdHex(id))
+	if err != nil {
+		log.WithField("info", rmInfo).WithError(err).Warnf("Unable to remove filesystems of groups when deleting daemon %v", id)
+	}
+
 	return c.String(http.StatusOK, res.Hex())
 }
 

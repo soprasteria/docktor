@@ -13,10 +13,15 @@ const variableNamePattern = `^[a-zA-Z0-9_]{1,200}$`
 
 // Variable like environment variables (GID of user for example)
 type Variable struct {
-	ID          bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-	Name        string        `bson:"name" json:"name"`
-	Value       string        `bson:"value,omitempty" json:"value,omitempty"`
-	Description string        `bson:"description,omitempty" json:"description,omitempty"`
+	ID    bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
+	Name  string        `bson:"name" json:"name"`
+	Value string        `bson:"value,omitempty" json:"value,omitempty"`
+	// String containing patterns to fill automatically value of variable at deployment time.
+	// For example: :
+	// - a Mongo connection uri : 'mongodb://${containers.mongo.name}:${containers.mongo.ports.external:27017}'
+	// - a generated string of length 10 (for password): '${genstring:10}'
+	GenPattern  string `bson:"genPattern,omitempty" json:"genPattern,omitempty"`
+	Description string `bson:"description,omitempty" json:"description,omitempty"`
 }
 
 // Format prints a parameter container as a string like : key=value

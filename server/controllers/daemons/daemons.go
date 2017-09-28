@@ -1,6 +1,7 @@
 package daemons
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/soprasteria/docktor/server/types"
@@ -64,7 +65,7 @@ const (
 // GetInfo : retrieving the docker daemon status using redis cache
 func GetInfo(daemon types.Daemon, client *redis.Client, force bool) (*DaemonInfo, error) {
 	info := &DaemonInfo{}
-	key := daemon.ID.Hex()
+	key := fmt.Sprintf(daemonInfoCacheKeyFormat, daemon.ID.Hex())
 	if !force {
 		err := utils.GetFromRedis(client, key, info)
 		if err == nil {

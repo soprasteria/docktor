@@ -23,25 +23,55 @@ const (
 
 // Daemon defines a server where services can be deployed
 type Daemon struct {
-	ID            bson.ObjectId   `bson:"_id,omitempty" json:"id,omitempty"`
-	Active        bool            `bson:"active" json:"active"`
-	Name          string          `bson:"name" json:"name" validate:"required"` // Unique in database
-	Protocol      DaemonProtocol  `bson:"protocol" json:"protocol" validate:"required"`
-	Host          string          `bson:"host" json:"host" validate:"required,hostname"`
-	Port          int             `bson:"port" json:"port" validate:"required,gte=0,lte=65535"`
-	Timeout       int             `bson:"timeout" json:"timeout" validate:"required,gt=0"` // Timeout in ms
-	Ca            string          `bson:"ca,omitempty" json:"ca,omitempty"`
-	Cert          string          `bson:"cert,omitempty" json:"cert,omitempty"`
-	Key           string          `bson:"key,omitempty" json:"key,omitempty"`
-	MountingPoint string          `bson:"mountingPoint" json:"mountingPoint" validate:"required"`
-	Description   string          `bson:"description,omitempty" json:"description,omitempty"`
-	CAdvisorAPI   string          `bson:"cadvisorApi,omitempty" json:"cadvisorApi,omitempty" validate:"omitempty,url"`
-	Site          bson.ObjectId   `bson:"site" json:"site" validate:"required"`
-	Variables     Variables       `bson:"variables" json:"variables"`
-	Volumes       Volumes         `bson:"volumes" json:"volumes"`
-	Tags          []bson.ObjectId `bson:"tags" json:"tags"`
-	Created       time.Time       `bson:"created" json:"created"` // Fields that will be populated automatically by server
-	Updated       time.Time       `bson:"updated" json:"updated"` // Fields that will be populated automatically by server
+	ID bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
+	// Only active daemons are monitored and can be used to deploy service
+	Active bool `bson:"active" json:"active"`
+	// Unique in database
+	Name string `bson:"name" json:"name" validate:"required"`
+	// Type of protocol to reach the Docker daemon (HTTP, HTTPS)
+	Protocol DaemonProtocol `bson:"protocol" json:"protocol" validate:"required"`
+	// Hostname or IP to reach the Docker daemon
+	Host string `bson:"host" json:"host" validate:"required,hostname"`
+	// Port to reach the Docker daemon
+	Port int `bson:"port" json:"port" validate:"required,gte=0,lte=65535"`
+	// Timeout in ms
+	Timeout int `bson:"timeout" json:"timeout" validate:"required,gt=0"`
+	// In case of using TLS with HTTPS, a ca content file is needed (see https://docs.docker.com/engine/security/https/)
+	Ca string `bson:"ca,omitempty" json:"ca,omitempty"`
+	// In case of using TLS with HTTPS, a cert content file is needed (see https://docs.docker.com/engine/security/https/)
+	Cert string `bson:"cert,omitempty" json:"cert,omitempty"`
+	// In case of using TLS with HTTPS, a key content file is needed (see https://docs.docker.com/engine/security/https/)
+	Key string `bson:"key,omitempty" json:"key,omitempty"`
+	// A folder on the machine where the daemon is started.
+	// It's meant to be used as default prefix for volume binding when deploying a new container.
+	// Ex: MountingPoint=/data -> Volume binding=/data/GROUP1/container/a/given/path
+	MountingPoint string `bson:"mountingPoint" json:"mountingPoint" validate:"required"`
+	Description   string `bson:"description,omitempty" json:"description,omitempty"`
+	// API endpoint of the instance of Cadvisor on the machine where the daemon is started
+	// Cadvisor is used for monitoring (CPU/RAM), but also for filesystems
+	CAdvisorAPI string `bson:"cadvisorApi,omitempty" json:"cadvisorApi,omitempty" validate:"omitempty,url"`
+	// Localisation of the daemon
+	Site bson.ObjectId `bson:"site" json:"site" validate:"required"`
+	// Default container variables that will be populated at each container creation.
+	// Ex: Proxy variables
+	Variables Variables `bson:"variables" json:"variables"`
+	// Default volume bindings that will be populated at each container creation.
+	// Ex: /etc/localtime
+	Volumes Volumes `bson:"volumes" json:"volumes"`
+	// Tags on the daemon.
+	Tags    []bson.ObjectId `bson:"tags" json:"tags"`
+	Created time.Time       `bson:"created" json:"created"`
+	Updated time.Time       `bson:"updated" json:"updated"`
+}
+
+// Site defines a localisation on the planet. It's meant to define where a daemon is located.
+type Site struct {
+	ID        bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
+	Title     string        `bson:"title" json:"title" validate:"required"`
+	Latitude  float64       `bson:"latitude" json:"latitude" validate:"required,gte=-90,lte=90"`
+	Longitude float64       `bson:"longitude" json:"longitude" validate:"required,gte=-180,lte=180"`
+	Created   time.Time     `bson:"created" json:"created"`
+	Updated   time.Time     `bson:"updated" json:"updated"`
 }
 
 // DaemonProtocol is either HTTP or HTTPS

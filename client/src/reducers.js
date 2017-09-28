@@ -5,7 +5,6 @@ import { routerReducer } from 'react-router-redux';
 import sites from './modules/sites/sites.reducer';
 import daemons from './modules/daemons/daemons.reducer';
 import groups from './modules/groups/groups.reducer';
-import services from './modules/services/services.reducer';
 import users from './modules/users/users.reducer';
 import tags from './modules/tags/tags.reducer';
 import toasts from './modules/toasts/toasts.reducer';
@@ -17,7 +16,6 @@ const reducers = combineReducers({
   sites,
   daemons,
   groups,
-  services,
   users,
   tags,
   toasts,

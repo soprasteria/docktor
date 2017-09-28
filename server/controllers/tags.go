@@ -102,8 +102,8 @@ func (s *Tags) Delete(c echo.Context) error {
 
 	collections := []types.UseTags{
 		docktorAPI.Daemons(),
-		docktorAPI.Services(),
 		docktorAPI.Users(),
+		docktorAPI.Groups(),
 		// TODO : add others collections (groups, services ...)
 	}
 

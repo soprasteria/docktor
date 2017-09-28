@@ -14,7 +14,6 @@ import (
 	"github.com/soprasteria/docktor/server/controllers/auth"
 	"github.com/soprasteria/docktor/server/controllers/daemons"
 	"github.com/soprasteria/docktor/server/controllers/groups"
-	"github.com/soprasteria/docktor/server/controllers/services"
 	"github.com/soprasteria/docktor/server/controllers/users"
 	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
@@ -36,7 +35,6 @@ func New() {
 	sitesC := controllers.Sites{}
 	tagsC := controllers.Tags{}
 	daemonsC := controllers.Daemons{}
-	servicesC := controllers.Services{}
 	groupsC := controllers.Groups{}
 	usersC := controllers.Users{}
 	authC := controllers.Auth{}
@@ -113,19 +111,6 @@ func New() {
 			}
 		}
 
-		servicesAPI := api.Group("/services")
-		{
-			servicesAPI.GET("", servicesC.GetAll)
-			servicesAPI.POST("/new", servicesC.Save, hasRole(types.AdminRole))
-			serviceAPI := servicesAPI.Group("/:serviceID")
-			{
-				serviceAPI.Use(isValidID("serviceID"), hasRole(types.AdminRole))
-				serviceAPI.GET("", servicesC.Get, services.RetrieveService)
-				serviceAPI.DELETE("", servicesC.Delete)
-				serviceAPI.PUT("", servicesC.Save)
-			}
-		}
-
 		groupsAPI := api.Group("/groups")
 		{
 			groupsAPI.GET("", groupsC.GetAll)
@@ -137,7 +122,6 @@ func New() {
 				groupAPI.GET("/tags", groupsC.GetTags, groups.RetrieveGroup)
 				groupAPI.GET("/members", groupsC.GetMembers, groups.RetrieveGroup)
 				groupAPI.GET("/daemons", groupsC.GetDaemons, groups.RetrieveGroup)
-				groupAPI.GET("/services", groupsC.GetServices, groups.RetrieveGroup)
 				groupAPI.DELETE("", groupsC.Delete, hasRole(types.AdminRole))
 				groupAPI.PUT("", groupsC.Save)
 			}

@@ -46,7 +46,6 @@ class NavBarComponent extends React.Component {
           <Menu.Item active={this.isActiveURL('/daemons')} as={Link} to='/daemons'>Daemons</Menu.Item>,
           [AUTH_ADMIN_ROLE]
         )}
-        {isAuthorized(<Menu.Item active={this.isActiveURL('/services')} as={Link} to='/services'>Services</Menu.Item>)}
         {isAuthorized(<Menu.Item active={this.isActiveURL('/groups')} as={Link} to='/groups'>Groups</Menu.Item>)}
         {isAuthorized(<Menu.Item active={this.isActiveURL('/users')} as={Link} to='/users'>Users</Menu.Item>)}
         {isAuthorized(
