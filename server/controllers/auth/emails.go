@@ -6,7 +6,7 @@ import (
 
 	"github.com/matcornic/hermes"
 	log "github.com/sirupsen/logrus"
-	"github.com/soprasteria/docktor/server/controllers/email"
+	"github.com/soprasteria/docktor/server/email"
 	"github.com/soprasteria/docktor/server/types"
 )
 
