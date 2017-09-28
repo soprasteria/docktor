@@ -18,8 +18,8 @@ Each template or service contains default information needed by Docktor to autom
 
 Catalog Service
 
-A catalog service is an entity representing a tool or a service, available for deployment on a given server. A catalog service is versioned and contains one ore more catalog containers. These versions are used to notify the user that a new version is avalaible for his deployed service.
-Catalog containers inside a catalog service constitute a functionnaly consistant service. It means that the service is not working properly if one its container is down.
+A catalog service is an entity representing a tool or a service, available for deployment on a given server. A catalog service is versioned and contains one ore more catalog containers. These versions are used to notify the user that a new version is available for his deployed service.
+Catalog containers inside a catalog service constitute a functionnaly consistent service. It means that the service is not working properly if one its container is down.
 
 For instance, a service named "SonarQube" is composed of many versions ( 5.6.7, 6.4.1, 6.5, ...). Each version of SonarQube is composed of two catalog containers that are working together: the web application and the database. Each catalog container defines a Docker image version and all default configuration, used to help Docktor to deploy it automatically.
 
@@ -32,7 +32,7 @@ For instance, the container for database of "SonarQube" service defines: the int
 Catalog Template
 
 A catalog template is an entity composed of multiple catalog services. Catalog services in a template are not hard bounded with each other. It's just a set of tools that can be deployed together in a just one click. Once, the template is just a boostrap entity meant to deploy multiple services at once. The notion of template disappears once the services are deployed in a group.
-That's why templates are not versionned. Templates are refering to the latest version of services that are contained in it.
+That's why templates are not versionned. Templates are referring to the latest version of services that are contained in it.
 
 For instance, a 'software factory' template could contains the catalog services "SonarQube", "Jenkins", "Gitlab" and so on. Once theses services are deployed, they are able to work independently.
 

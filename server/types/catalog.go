@@ -63,7 +63,7 @@ type CatalogServiceVersion struct {
 // Besides, it contains available commands to execute and healtcheck configuration
 type CatalogContainer struct {
 	ID bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-	// A user-friendly name to distingish deployed containers inside a deployed service
+	// A user-friendly name to distinguish deployed containers inside a deployed service
 	Name string `bson:"name" json:"name"`
 	// Image version like 'registryname/imagename:tag'
 	Image string `bson:"image" json:"image"`
