@@ -37,11 +37,11 @@ type Daemon struct {
 	// Timeout in ms
 	Timeout int `bson:"timeout" json:"timeout" validate:"required,gt=0"`
 	// In case of using TLS with HTTPS, a ca content file is needed (see https://docs.docker.com/engine/security/https/)
-	Ca string `bson:"ca,omitempty" json:"ca,omitempty"`
+	Ca string `bson:"ca" json:"ca,omitempty"`
 	// In case of using TLS with HTTPS, a cert content file is needed (see https://docs.docker.com/engine/security/https/)
-	Cert string `bson:"cert,omitempty" json:"cert,omitempty"`
+	Cert string `bson:"cert" json:"cert,omitempty"`
 	// In case of using TLS with HTTPS, a key content file is needed (see https://docs.docker.com/engine/security/https/)
-	Key string `bson:"key,omitempty" json:"key,omitempty"`
+	Key string `bson:"key" json:"key,omitempty"`
 	// A folder on the machine where the daemon is started.
 	// It's meant to be used as default prefix for volume binding when deploying a new container.
 	// Ex: MountingPoint=/data -> Volume binding=/data/GROUP1/container/a/given/path

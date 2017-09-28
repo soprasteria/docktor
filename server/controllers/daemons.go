@@ -6,6 +6,7 @@ import (
 	"time"
 
 	log "github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/labstack/echo"
 	"github.com/soprasteria/docktor/server/controllers/auth"
@@ -24,12 +25,17 @@ type Daemons struct {
 // GetAll daemons from docktor
 func (d *Daemons) GetAll(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
-	daemons, err := docktorAPI.Daemons().FindAll()
+	docktorDaemons, err := docktorAPI.Daemons().FindAll()
 	if err != nil {
 		log.WithError(err).Error("Unable to get all daemons")
 		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to get all daemons because of technical error: %v. Retry later.", err))
 	}
-	return c.JSON(http.StatusOK, daemons)
+	docktorDaemons, err = daemons.DecryptDaemons(docktorDaemons, viper.GetString("auth.encrypt-secret"))
+	if err != nil {
+		log.WithError(err).Error("Unable to decrypt at least one daemon")
+		return c.String(http.StatusInternalServerError, "Unable to get all daemons because of technical error. Retry later.")
+	}
+	return c.JSON(http.StatusOK, docktorDaemons)
 }
 
 //Save daemon into docktor
@@ -97,10 +103,24 @@ func (d *Daemons) Save(c echo.Context) error {
 	// Keep only existing tags
 	daemon.Tags = existingTags(docktorAPI, daemon.Tags)
 
+	// Encrypt sensible data
+	daemon, err := daemons.EncryptDaemon(daemon, viper.GetString("auth.encrypt-secret"))
+	if err != nil {
+		log.WithError(err).Errorf("Unable to encrypt daemon %v", daemon.ID)
+		return c.String(http.StatusInternalServerError, "Unable to save daemon because of technical error. Retry later.")
+	}
+
 	res, err := docktorAPI.Daemons().Save(daemon)
 	if err != nil {
 		log.WithError(err).Errorf("Unexpected error when saving daemon %v", daemon.ID)
 		return c.String(http.StatusInternalServerError, fmt.Sprintf("Unable to save daemon because of technical error: %v. Retry later.", err))
+	}
+
+	// Decrypt sensible data
+	res, err = daemons.DecryptDaemon(res, viper.GetString("auth.encrypt-secret"))
+	if err != nil {
+		log.WithError(err).Errorf("Unable to decrypt daemon %v", daemon.ID)
+		return c.String(http.StatusInternalServerError, "Unable to save daemon because of technical error. Retry later.")
 	}
 	return c.JSON(http.StatusOK, res)
 }
@@ -140,6 +160,7 @@ func (d *Daemons) Get(c echo.Context) error {
 		// Fetch daemon, amputed of its sensible data when user is not admin
 		return c.JSON(http.StatusOK, daemons.GetDaemonRest(daemon))
 	}
+
 	return c.JSON(http.StatusOK, daemon)
 }
 

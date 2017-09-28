@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/soprasteria/docktor/server/security"
 	"github.com/soprasteria/docktor/server/types"
 	"github.com/soprasteria/docktor/server/utils"
 	"gopkg.in/mgo.v2/bson"
@@ -88,4 +89,81 @@ func GetInfo(daemon types.Daemon, client *redis.Client, force bool) (*DaemonInfo
 	info = &DaemonInfo{Status: statusUP, NbImages: dockerInfo.Images, NbContainers: dockerInfo.Containers}
 	go utils.SetIntoRedis(client, key, info, 5*time.Minute)
 	return info, nil
+}
+
+// EncryptDaemon encrypts sensible data like TLS Cert, Ca and Key with a given secret key.
+// Encrypted daemon is meant to be save in storage.
+func EncryptDaemon(daemon types.Daemon, secretKey string) (types.Daemon, error) {
+	encryptedDaemon := daemon
+	if daemon.Ca != "" {
+		encryptedCa, err := security.EncryptString(daemon.Ca, secretKey)
+		if err != nil {
+			return types.Daemon{}, err
+		}
+		encryptedDaemon.Ca = encryptedCa
+	}
+
+	if daemon.Cert != "" {
+		encryptedCert, err := security.EncryptString(daemon.Cert, secretKey)
+		if err != nil {
+			return types.Daemon{}, err
+		}
+		encryptedDaemon.Cert = encryptedCert
+	}
+
+	if daemon.Key != "" {
+		encryptedKey, err := security.EncryptString(daemon.Key, secretKey)
+		if err != nil {
+			return types.Daemon{}, err
+		}
+		encryptedDaemon.Key = encryptedKey
+	}
+
+	return encryptedDaemon, nil
+}
+
+// DecryptDaemon decrypts sensible data like TLS Cert, Ca and Key with a given secret key.
+// Decrypted daemon is meant to be send to client.
+func DecryptDaemon(encryptedDaemon types.Daemon, secretKey string) (types.Daemon, error) {
+	decryptedDaemon := encryptedDaemon
+
+	if encryptedDaemon.Ca != "" {
+		decryptedCa, err := security.DecryptString(encryptedDaemon.Ca, secretKey)
+		if err != nil {
+			return types.Daemon{}, err
+		}
+		decryptedDaemon.Ca = decryptedCa
+	}
+
+	if encryptedDaemon.Cert != "" {
+		decryptedCert, err := security.DecryptString(encryptedDaemon.Cert, secretKey)
+		if err != nil {
+			return types.Daemon{}, err
+		}
+		decryptedDaemon.Cert = decryptedCert
+	}
+
+	if encryptedDaemon.Key != "" {
+		decryptedKey, err := security.DecryptString(encryptedDaemon.Key, secretKey)
+		if err != nil {
+			return types.Daemon{}, err
+		}
+		decryptedDaemon.Key = decryptedKey
+	}
+	return decryptedDaemon, nil
+}
+
+// DecryptDaemons decrypts a list encrypted daemons. See DecryptDaemon function for more information.
+func DecryptDaemons(encryptedDaemons []types.Daemon, secretKey string) ([]types.Daemon, error) {
+	decryptedDaemons := make([]types.Daemon, len(encryptedDaemons))
+
+	for _, encryptedDaemon := range encryptedDaemons {
+		decryptedDaemon, err := DecryptDaemon(encryptedDaemon, secretKey)
+		if err != nil {
+			return nil, fmt.Errorf("Unable to decrypt daemon %v : %v", encryptedDaemon.ID, err)
+		}
+		decryptedDaemons = append(decryptedDaemons, decryptedDaemon)
+	}
+
+	return decryptedDaemons, nil
 }
