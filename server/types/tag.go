@@ -68,7 +68,7 @@ type Tag struct {
 	ID          bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty" validate:"required"`
 	Name        TagName       `bson:"name" json:"name" validate:"required"` // The name of the tag
 	Category    TagCategory   `bson:"category" json:"category" validate:"required"`
-	UsageRights Role          `bson:"usageRights,omitempty" json:"usageRights,omitempty" validate:"required"`
+	UsageRights Role          `bson:"usageRights" json:"usageRights" validate:"required"`
 	Created     time.Time     `bson:"created" json:"created"`
 	Updated     time.Time     `bson:"updated" json:"updated"`
 }

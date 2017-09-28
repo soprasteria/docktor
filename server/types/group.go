@@ -127,7 +127,7 @@ type Container struct {
 	// Actual args on the deployed container
 	Args Args `bson:"args" json:"args"`
 	// Id of the daemon where this container is deployed
-	DaemonID bson.ObjectId   `bson:"daemonId,omitempty" json:"daemonId,omitempty"`
+	DaemonID bson.ObjectId   `bson:"daemonId" json:"daemonId,omitempty"`
 	Tags     []bson.ObjectId `bson:"tags" json:"tags"`
 	Created  time.Time       `bson:"created" json:"created"`
 	Updated  time.Time       `bson:"updated" json:"updated"`
@@ -228,7 +228,7 @@ func (members Members) Validate() error {
 type FileSystem struct {
 	Daemon      bson.ObjectId `bson:"daemon" json:"daemon" validate:"required"`
 	Partition   string        `bson:"partition" json:"partition" validate:"required"`
-	Description string        `bson:"description,omitempty" json:"description,omitempty"`
+	Description string        `bson:"description" json:"description,omitempty"`
 }
 
 // Validate checks that the filesystem is valid whenl

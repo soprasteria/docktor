@@ -28,10 +28,10 @@ const (
 // Volume is a binding between a folder from inside the container to the host machine
 type Volume struct {
 	ID          bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-	Internal    string        `bson:"internal" json:"internal" validate:"required"`                 // volume inside the container
-	External    string        `bson:"external" json:"external"`                                     // volume outside the container
-	Rights      Rights        `bson:"rights,omitempty" json:"rights,omitempty" validate:"required"` // ro or rw
-	Description string        `bson:"description,omitempty" json:"description,omitempty"`
+	Internal    string        `bson:"internal" json:"internal" validate:"required"`       // volume inside the container
+	External    string        `bson:"external" json:"external"`                           // volume outside the container
+	Rights      Rights        `bson:"rights" json:"rights,omitempty" validate:"required"` // ro or rw
+	Description string        `bson:"description" json:"description,omitempty"`
 }
 
 // Format prints a volume as a string like : external:internal:rights

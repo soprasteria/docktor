@@ -19,7 +19,7 @@ const (
 type CatatalogTemplate struct {
 	ID              bson.ObjectId   `bson:"_id,omitempty" json:"id,omitempty"`
 	Name            string          `bson:"name" json:"name"`
-	Description     string          `bson:"description,omitempty" json:"description,omitempty"`
+	Description     string          `bson:"description" json:"description,omitempty"`
 	CatalogServices []bson.ObjectId `bson:"catalogServices" json:"catalogServices"`
 	Tags            []bson.ObjectId `bson:"tags" json:"tags"`
 	Created         time.Time       `bson:"created" json:"created"`
@@ -143,7 +143,7 @@ type Command struct {
 	// Effective command to execute
 	Exec string `bson:"exec" json:"exec"`
 	// Arguments are parameters password to the command. By default, custom arguments are not authorized for a command
-	Arguments CommandArguments `bson:"arguments,omitempty" json:"arguments,omitempty"`
+	Arguments CommandArguments `bson:"arguments" json:"arguments,omitempty"`
 	// Only members with one of these roles (or superadmin) can execute the command
 	Roles []MemberRole `bson:"roles" json:"roles"`
 }
@@ -161,7 +161,7 @@ type CommandArguments struct {
 	Authorized bool `bson:"authorized" json:"authorized"`
 	// When not empty and Authorized is true, restrict the list of arguments that can used by user at runtime.
 	// When empty and Authorized is true, arguments are not restricted
-	RestrictedValues []string `bson:"restrictedValues,omitempty" json:"restrictedValues,omitempty"`
+	RestrictedValues []string `bson:"restrictedValues" json:"restrictedValues,omitempty"`
 }
 
 // URL for service

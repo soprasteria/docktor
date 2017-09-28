@@ -46,10 +46,10 @@ type Daemon struct {
 	// It's meant to be used as default prefix for volume binding when deploying a new container.
 	// Ex: MountingPoint=/data -> Volume binding=/data/GROUP1/container/a/given/path
 	MountingPoint string `bson:"mountingPoint" json:"mountingPoint" validate:"required"`
-	Description   string `bson:"description,omitempty" json:"description,omitempty"`
+	Description   string `bson:"description" json:"description,omitempty"`
 	// API endpoint of the instance of Cadvisor on the machine where the daemon is started
 	// Cadvisor is used for monitoring (CPU/RAM), but also for filesystems
-	CAdvisorAPI string `bson:"cadvisorApi,omitempty" json:"cadvisorApi,omitempty" validate:"omitempty,url"`
+	CAdvisorAPI string `bson:"cadvisorApi" json:"cadvisorApi,omitempty" validate:"omitempty,url"`
 	// Localisation of the daemon
 	Site bson.ObjectId `bson:"site" json:"site" validate:"required"`
 	// Default container variables that will be populated at each container creation.
