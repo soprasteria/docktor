@@ -33,9 +33,9 @@ export const getRoleColor = role => {
 export const getRoleIcon = role => {
   switch (role) {
     case AUTH_ADMIN_ROLE:
-      return 'lock';
-    case AUTH_USER_ROLE:
       return 'unlock';
+    case AUTH_USER_ROLE:
+      return 'lock';
     default:
       return 'warning sign';
   }
