@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"github.com/soprasteria/docktor/server"
-	"github.com/soprasteria/docktor/server/models"
-	"github.com/soprasteria/docktor/server/modules/email"
+	"github.com/soprasteria/docktor/server/email"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -15,7 +15,7 @@ var serveCmd = &cobra.Command{
 	Long:  `Docktor server will listen on 0.0.0.0:8080`,
 	Run: func(cmd *cobra.Command, args []string) {
 		email.InitSMTPConfiguration()
-		models.Connect()
+		storage.Connect()
 		server.New()
 	},
 }
@@ -32,6 +32,7 @@ func init() {
 	serveCmd.Flags().StringP("reset-pwd-secret", "", "dev-docktor-reset-pwd-to-change", "Secret key used when resetting the password. Change it in your instance")
 	serveCmd.Flags().StringP("bcrypt-pepper", "p", "dev-docktor-bcrypt", "Pepper used in password generation. Change it in your instance")
 	serveCmd.Flags().StringP("env", "e", "prod", "dev or prod")
+	serveCmd.Flags().String("encrypt-secret", "encrypt-secret-to-change", "Secret for sensible data encryption. Change it in your instance")
 	serveCmd.Flags().String("ldap-address", "", "LDAP full address like : ldap.server:389. Optional")
 	serveCmd.Flags().String("ldap-baseDN", "", "BaseDN. Optional")
 	serveCmd.Flags().String("ldap-domain", "", "Domain of the user. Optional")
@@ -60,6 +61,7 @@ func init() {
 	_ = viper.BindPFlag("auth.jwt-secret", serveCmd.Flags().Lookup("jwt-secret"))
 	_ = viper.BindPFlag("auth.reset-pwd-secret", serveCmd.Flags().Lookup("reset-pwd-secret"))
 	_ = viper.BindPFlag("auth.bcrypt-pepper", serveCmd.Flags().Lookup("bcrypt-pepper"))
+	_ = viper.BindPFlag("auth.encrypt-secret", serveCmd.Flags().Lookup("encrypt-secret"))
 	_ = viper.BindPFlag("ldap.address", serveCmd.Flags().Lookup("ldap-address"))
 	_ = viper.BindPFlag("ldap.baseDN", serveCmd.Flags().Lookup("ldap-baseDN"))
 	_ = viper.BindPFlag("ldap.domain", serveCmd.Flags().Lookup("ldap-domain"))

@@ -20,7 +20,7 @@ const (
 type Port struct {
 	ID          bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
 	Internal    int           `bson:"internal" json:"internal"`
-	External    int           `bson:"external,omitempty" json:"external,omitempty"`
+	External    int           `bson:"external" json:"external,omitempty"`
 	Protocol    Protocol      `bson:"protocol" json:"protocol"`
 	Description string        `bson:"description" json:"description"`
 }

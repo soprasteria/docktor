@@ -2,6 +2,8 @@ package server
 
 import (
 	"net/http"
+	"sort"
+	"strings"
 
 	log "github.com/sirupsen/logrus"
 	redis "gopkg.in/redis.v3"
@@ -9,11 +11,11 @@ import (
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/soprasteria/docktor/server/controllers"
-	"github.com/soprasteria/docktor/server/modules/auth"
-	"github.com/soprasteria/docktor/server/modules/daemons"
-	"github.com/soprasteria/docktor/server/modules/groups"
-	"github.com/soprasteria/docktor/server/modules/services"
-	"github.com/soprasteria/docktor/server/modules/users"
+	"github.com/soprasteria/docktor/server/controllers/auth"
+	"github.com/soprasteria/docktor/server/controllers/daemons"
+	"github.com/soprasteria/docktor/server/controllers/groups"
+	"github.com/soprasteria/docktor/server/controllers/users"
+	"github.com/soprasteria/docktor/server/storage"
 	"github.com/soprasteria/docktor/server/types"
 	"github.com/spf13/viper"
 )
@@ -33,7 +35,6 @@ func New() {
 	sitesC := controllers.Sites{}
 	tagsC := controllers.Tags{}
 	daemonsC := controllers.Daemons{}
-	servicesC := controllers.Services{}
 	groupsC := controllers.Groups{}
 	usersC := controllers.Users{}
 	authC := controllers.Auth{}
@@ -42,6 +43,7 @@ func New() {
 	engine.Use(middleware.Logger())
 	engine.Use(middleware.Recover())
 	engine.Use(middleware.Gzip())
+	engine.Validator = newValidator() // Use custom validator to check field entities, base on tags
 
 	engine.GET("/ping", pong)
 
@@ -74,12 +76,12 @@ func New() {
 		tagsAPI := api.Group("/tags")
 		{
 			tagsAPI.GET("", tagsC.GetAll)
-			tagsAPI.POST("", tagsC.Save, hasRole(types.AdminRole))
-			tagAPI := tagsAPI.Group("/:id")
+			tagsAPI.POST("/new", tagsC.Save, hasRole(types.AdminRole))
+			tagAPI := tagsAPI.Group("/:tagID")
 			{
-				tagAPI.Use(isValidID("id"), hasRole(types.AdminRole))
+				tagAPI.Use(isValidID("tagID"), hasRole(types.AdminRole))
 				tagAPI.DELETE("", tagsC.Delete)
-				tagAPI.PUT("", tagsC.Save, hasRole(types.AdminRole))
+				tagAPI.PUT("", tagsC.Save)
 			}
 		}
 
@@ -87,9 +89,9 @@ func New() {
 		{
 			sitesAPI.GET("", sitesC.GetAll)
 			sitesAPI.POST("/new", sitesC.Save, hasRole(types.AdminRole))
-			siteAPI := sitesAPI.Group("/:id")
+			siteAPI := sitesAPI.Group("/:siteID")
 			{
-				siteAPI.Use(isValidID("id"), hasRole(types.AdminRole))
+				siteAPI.Use(isValidID("siteID"), hasRole(types.AdminRole))
 				siteAPI.DELETE("", sitesC.Delete)
 				siteAPI.PUT("", sitesC.Save)
 			}
@@ -102,23 +104,10 @@ func New() {
 			daemonAPI := daemonsAPI.Group("/:daemonID")
 			{
 				daemonAPI.Use(isValidID("daemonID"))
-				daemonAPI.GET("", daemonsC.Get, hasRole(types.SupervisorRole), daemons.RetrieveDaemon)
+				daemonAPI.GET("", daemonsC.Get, daemons.RetrieveDaemon)
 				daemonAPI.DELETE("", daemonsC.Delete, hasRole(types.AdminRole))
 				daemonAPI.PUT("", daemonsC.Save, hasRole(types.AdminRole))
-				daemonAPI.GET("/info", daemonsC.GetInfo, hasRole(types.SupervisorRole), redisCache(redisClient), daemons.RetrieveDaemon)
-			}
-		}
-
-		servicesAPI := api.Group("/services")
-		{
-			servicesAPI.GET("", servicesC.GetAll)
-			servicesAPI.POST("/new", servicesC.Save, hasRole(types.AdminRole))
-			serviceAPI := servicesAPI.Group("/:serviceID")
-			{
-				serviceAPI.Use(isValidID("serviceID"), hasRole(types.AdminRole))
-				serviceAPI.GET("", servicesC.Get, services.RetrieveService)
-				serviceAPI.DELETE("", servicesC.Delete)
-				serviceAPI.PUT("", servicesC.Save)
+				daemonAPI.GET("/info", daemonsC.GetInfo, redisCache(redisClient), daemons.RetrieveDaemon)
 			}
 		}
 
@@ -128,13 +117,12 @@ func New() {
 			groupsAPI.POST("/new", groupsC.Save, hasRole(types.AdminRole))
 			groupAPI := groupsAPI.Group("/:groupID")
 			{
-				groupAPI.Use(isValidID("groupID"), hasRole(types.AdminRole))
+				groupAPI.Use(isValidID("groupID"))
 				groupAPI.GET("", groupsC.Get, groups.RetrieveGroup)
 				groupAPI.GET("/tags", groupsC.GetTags, groups.RetrieveGroup)
 				groupAPI.GET("/members", groupsC.GetMembers, groups.RetrieveGroup)
 				groupAPI.GET("/daemons", groupsC.GetDaemons, groups.RetrieveGroup)
-				groupAPI.GET("/services", groupsC.GetServices, groups.RetrieveGroup)
-				groupAPI.DELETE("", groupsC.Delete)
+				groupAPI.DELETE("", groupsC.Delete, hasRole(types.AdminRole))
 				groupAPI.PUT("", groupsC.Save)
 			}
 		}
@@ -144,9 +132,9 @@ func New() {
 			// No "isAdmin" middleware on users because users can delete/modify themselves
 			// Rights are implemented in each controller
 			usersAPI.GET("", usersC.GetAll)
-			userAPI := usersAPI.Group("/:id")
+			userAPI := usersAPI.Group("/:userID")
 			{
-				userAPI.Use(isValidID("id"))
+				userAPI.Use(isValidID("userID"))
 				userAPI.GET("", usersC.Get, users.RetrieveUser)
 				userAPI.DELETE("", usersC.Delete)
 				userAPI.PUT("", usersC.Update)
@@ -166,11 +154,35 @@ func New() {
 	engine.Static("/fonts", "client/dist/fonts")
 
 	engine.GET("/*", GetIndex)
-	engine.HideBanner = true
-	log.Info("Server started on port 8080")
+
+	if log.GetLevel() == log.DebugLevel {
+		displayAvailableRoutes(engine.Routes())
+	}
+
+	createIndexes()
+
+	log.Info("Starting server on port 8080...")
 	if err := engine.Start(":8080"); err != nil {
 		log.WithError(err).Fatal("Can't start server")
 		engine.Logger.Fatal(err.Error())
+	}
+}
+
+func createIndexes() {
+	dock, err := storage.Get()
+	if err != nil {
+		log.WithError(err).Fatal("Can't ensure that indexes have been created")
+		return
+	}
+	defer dock.Close()
+	for _, db := range dock.Collections() {
+		if dbWithIndex, ok := db.(storage.IsCollectionWithIndexes); ok {
+			log.Infof("Ensuring indexes creating for '%v' collection", db.GetCollectionName())
+			err := dbWithIndex.CreateIndexes()
+			if err != nil {
+				log.WithError(err).Error("Cannot create index")
+			}
+		}
 	}
 }
 
@@ -184,4 +196,27 @@ func pong(c echo.Context) error {
 // GetIndex handler which render the index.html of mom
 func GetIndex(c echo.Context) error {
 	return c.File("client/dist/index.html")
+}
+
+// ByRoutePath is a sortable type meant to sort Echo routes by path, then by HTTP method
+type ByRoutePath []*echo.Route
+
+func (a ByRoutePath) Len() int      { return len(a) }
+func (a ByRoutePath) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
+func (a ByRoutePath) Less(i, j int) bool {
+	ai := a[i]
+	aj := a[j]
+	if ai.Path == aj.Path {
+		return ai.Method < aj.Method
+	}
+	return ai.Path < aj.Path
+}
+
+func displayAvailableRoutes(routes []*echo.Route) {
+	sort.Sort(ByRoutePath(routes))
+	for _, r := range routes {
+		if strings.Contains(r.Name, "controllers") {
+			log.Debugf("Available API route - %-7v:%v", r.Method, r.Path)
+		}
+	}
 }

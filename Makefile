@@ -12,7 +12,7 @@ build:
 
 run:
 	go get github.com/skelterjohn/rerun
-	rerun github.com/soprasteria/docktor serve
+	rerun github.com/soprasteria/docktor serve --level=debug
 
 test:
 	go get github.com/stretchr/testify
@@ -27,4 +27,4 @@ test:
 lint:
 	go get github.com/alecthomas/gometalinter
 	gometalinter --install
-	gometalinter --vendor --deadline=60m --fast --config=./gometalinter.json ./server/... ./cmd/... .
+	gometalinter --vendor --deadline=60m --config=./gometalinter.json ./server/... ./cmd/... .

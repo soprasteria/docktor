@@ -1,13 +1,27 @@
 package types
 
-import "gopkg.in/mgo.v2/bson"
+import (
+	"fmt"
+	"regexp"
+
+	"gopkg.in/mgo.v2/bson"
+)
+
+// variableNamePattern is the pattern for Unix variables: a string of at least one character and max 200, and contains alphanum and underscore characters
+// Matches with AVAR, A_VAR, aVAR9...
+const variableNamePattern = `^[a-zA-Z0-9_]{1,200}$`
 
 // Variable like environment variables (GID of user for example)
 type Variable struct {
-	ID          bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-	Name        string        `bson:"name" json:"name"`
-	Value       string        `bson:"value,omitempty" json:"value,omitempty"`
-	Description string        `bson:"description" json:"description"`
+	ID    bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
+	Name  string        `bson:"name" json:"name"`
+	Value string        `bson:"value" json:"value,omitempty"`
+	// String containing patterns to fill automatically value of variable at deployment time.
+	// For example: :
+	// - a Mongo connection uri : 'mongodb://${containers.mongo.name}:${containers.mongo.ports.external:27017}'
+	// - a generated string of length 10 (for password): '${genstring:10}'
+	GenPattern  string `bson:"genPattern" json:"genPattern,omitempty"`
+	Description string `bson:"description" json:"description,omitempty"`
 }
 
 // Format prints a parameter container as a string like : key=value
@@ -27,8 +41,30 @@ func (v Variable) Equals(b Variable) bool {
 	return v.Name == b.Name
 }
 
+var variableNameRegex = regexp.MustCompile(variableNamePattern)
+
+// Validate validates that the variable has right content
+// For instance, the Name of a variable respects the '^[a-zA-Z0-9_]{1,200}$' regex pattern
+func (v Variable) Validate() error {
+	if !variableNameRegex.MatchString(v.Name) {
+		return fmt.Errorf("Variable of Name %q does not match regex %q", v.Name, variableNamePattern)
+	}
+	return nil
+}
+
 // Variables is a slice of variables
 type Variables []Variable
+
+// Validate validates that all variables have right content
+// It exists in error when a variable is not valid
+func (vs Variables) Validate() error {
+	for _, v := range vs {
+		if err := v.Validate(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // Equals check that two slices of variables have the same content
 func (vs Variables) Equals(b Variables) bool {

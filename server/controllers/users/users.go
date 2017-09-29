@@ -1,0 +1,193 @@
+package users
+
+import (
+	"errors"
+	"fmt"
+	"time"
+
+	log "github.com/sirupsen/logrus"
+	"github.com/soprasteria/docktor/server/storage"
+	"github.com/soprasteria/docktor/server/types"
+	"gopkg.in/mgo.v2/bson"
+)
+
+// Rest contains APIs entrypoints needed for accessing users
+type Rest struct {
+	Docktor *storage.Docktor
+}
+
+// UserRest contains data of user, amputed from sensible data
+type UserRest struct {
+	ID          string          `json:"id"`
+	Username    string          `json:"username" validate:"required,alphanum"`
+	FirstName   string          `json:"firstName" validate:"required"`
+	LastName    string          `json:"lastName" validate:"required"`
+	DisplayName string          `json:"displayName"`
+	Role        types.Role      `json:"role" validate:"required"`
+	Email       string          `json:"email" validate:"required,email"`
+	Provider    types.Provider  `json:"provider" validate:"required"`
+	Tags        []bson.ObjectId `json:"tags"`
+	Favorites   []bson.ObjectId `json:"favorites"`
+}
+
+// IsAdmin checks that the user is an admin, meaning he can do anything on the application.
+func (u UserRest) IsAdmin() bool {
+	return u.Role == types.AdminRole
+}
+
+// IsNormalUser checks that the user is a classic one
+func (u UserRest) IsNormalUser() bool {
+	return u.Role == types.UserRole
+}
+
+// HasValidRole checks the user has a known role
+func (u UserRest) HasValidRole() bool {
+	if u.Role != types.AdminRole && u.Role != types.UserRole {
+		return false
+	}
+
+	return true
+}
+
+// GetUserRest returns a Docktor user, amputed of sensible data
+func GetUserRest(user types.User) UserRest {
+	return UserRest{
+		ID:          user.ID.Hex(),
+		Username:    user.Username,
+		FirstName:   user.FirstName,
+		LastName:    user.LastName,
+		DisplayName: user.DisplayName,
+		Email:       user.Email,
+		Role:        user.Role,
+		Provider:    user.Provider,
+		Tags:        user.Tags,
+		Favorites:   user.Favorites,
+	}
+}
+
+// OverwriteUserFromRest get data from userWithNewData and put it in userToOverwrite
+// userToOverwrite can have existing data
+// ID and Provider are not updated because it's a read-only attributes.
+func OverwriteUserFromRest(userToOverwrite types.User, userWithNewData UserRest) types.User {
+	userToOverwrite.Username = userWithNewData.Username
+	userToOverwrite.FirstName = userWithNewData.FirstName
+	userToOverwrite.LastName = userWithNewData.LastName
+	userToOverwrite.DisplayName = userWithNewData.DisplayName
+	userToOverwrite.Email = userWithNewData.Email
+	userToOverwrite.Role = userWithNewData.Role
+	userToOverwrite.Tags = userWithNewData.Tags
+	userToOverwrite.Favorites = userWithNewData.Favorites
+	return userToOverwrite
+}
+
+// GetUsersRest returns a slice of Docktor users, amputed of sensible data
+func GetUsersRest(users []types.User) []UserRest {
+	usersRest := []UserRest{}
+	for _, v := range users {
+		usersRest = append(usersRest, GetUserRest(v))
+	}
+	return usersRest
+}
+
+// GetUserRest gets user from Docktor
+func (s *Rest) GetUserRest(username string) (UserRest, error) {
+	if s.Docktor == nil {
+		return UserRest{}, errors.New("Docktor API is not initialized")
+	}
+	user, err := s.Docktor.Users().Find(username)
+	if err != nil {
+		return UserRest{}, fmt.Errorf("Can't retrieve user %s", username)
+	}
+
+	return GetUserRest(user), nil
+}
+
+// GetAllUserRest get all users from Docktor
+func (s *Rest) GetAllUserRest() ([]UserRest, error) {
+	if s.Docktor == nil {
+		return []UserRest{}, errors.New("Docktor API is not initialized")
+	}
+
+	users, err := s.Docktor.Users().FindAll()
+	if err != nil {
+		return []UserRest{}, errors.New("Can't retrieve all users")
+	}
+	return GetUsersRest(users), nil
+}
+
+// GetUsersFromIds from their mongodb ids..
+func (s *Rest) GetUsersFromIds(ids []bson.ObjectId) ([]UserRest, error) {
+	if s.Docktor == nil {
+		return []UserRest{}, errors.New("Docktor API is not initialized")
+	}
+	users, err := s.Docktor.Users().FindAllByIDs(ids)
+	if err != nil {
+		return []UserRest{}, errors.New("Can't retrieve users")
+	}
+	return GetUsersRest(users), nil
+}
+
+func updateUserAccountData(userFromDocktor types.User, email, displayName, firstName, lastName *string) types.User {
+	if userFromDocktor.Provider == types.LocalProvider {
+		// Can update personal data only if it's a local user
+		// as LDAP providers are masters of this type of data
+		if email != nil {
+			userFromDocktor.Email = *email
+		}
+		if displayName != nil {
+			userFromDocktor.DisplayName = *displayName
+		}
+		if firstName != nil {
+			userFromDocktor.FirstName = *firstName
+		}
+		if lastName != nil {
+			userFromDocktor.LastName = *lastName
+		}
+	}
+	return userFromDocktor
+}
+
+// UpdateUser allows a user to modify his own profile
+// This method updates: FirstName, LastName, DisplayName, Email (only in local provider mode), Tags, Role
+// The controls for rights to modify a field must be done before calling this method
+func (s *Rest) UpdateUser(userID string, email, displayName, firstName, lastName *string, role *types.Role, tags []bson.ObjectId, favorites []bson.ObjectId) (UserRest, error) {
+	if s.Docktor == nil {
+		return UserRest{}, errors.New("Docktor API is not initialized")
+	}
+
+	log.WithField("userID", userID).Info("Updating user")
+
+	// Search for user
+	userFromDocktor, err := s.Docktor.Users().FindByID(userID)
+	if err != nil {
+		return UserRest{}, err
+	}
+
+	if userFromDocktor.ID.Hex() == "" {
+		return UserRest{}, errors.New("User does not exists")
+	}
+
+	userFromDocktor = updateUserAccountData(userFromDocktor, email, displayName, firstName, lastName)
+
+	if tags != nil {
+		userFromDocktor.Tags = tags
+	}
+
+	if favorites != nil {
+		userFromDocktor.Favorites = favorites
+	}
+
+	if role != nil && role.IsValid() {
+		userFromDocktor.Role = *role
+	}
+
+	userFromDocktor.Updated = time.Now()
+
+	// Save the user
+	res, err := s.Docktor.Users().Save(userFromDocktor)
+	if err != nil {
+		return UserRest{}, err
+	}
+
+	return GetUserRest(res), nil
+}

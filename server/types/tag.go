@@ -11,8 +11,8 @@ import (
 
 //TagName is the name of a tag, represented by its raw name and its slugified one (Slug is unique)
 type TagName struct {
-	Raw  string `bson:"raw" json:"raw"`
-	Slug string `bson:"slug" json:"slug"`
+	Raw  string `bson:"raw" json:"raw" validate:"required"`
+	Slug string `bson:"slug" json:"slug" validate:"required"`
 }
 
 // NewTagName creates a new tag name from a raw name
@@ -35,8 +35,8 @@ func (tn *TagName) GetSlug() string {
 
 //TagCategory is the category of a tag, represented by its raw name and its slugified one (Slug is unique)
 type TagCategory struct {
-	Raw  string `bson:"raw" json:"raw"`
-	Slug string `bson:"slug" json:"slug"`
+	Raw  string `bson:"raw" json:"raw" validate:"required"`
+	Slug string `bson:"slug" json:"slug" validate:"required"`
 }
 
 // NewTagCategory creates a new tag category from a raw category name
@@ -65,10 +65,10 @@ type Slugifiable interface {
 
 // Tag is a string
 type Tag struct {
-	ID          bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty"`
-	Name        TagName       `bson:"name" json:"name"` // The name the tag
-	Category    TagCategory   `bson:"category" json:"category"`
-	UsageRights Role          `bson:"usageRights,omitempty" json:"usageRights,omitempty"`
+	ID          bson.ObjectId `bson:"_id,omitempty" json:"id,omitempty" validate:"required"`
+	Name        TagName       `bson:"name" json:"name" validate:"required"` // The name of the tag
+	Category    TagCategory   `bson:"category" json:"category" validate:"required"`
+	UsageRights Role          `bson:"usageRights" json:"usageRights" validate:"required"`
 	Created     time.Time     `bson:"created" json:"created"`
 	Updated     time.Time     `bson:"updated" json:"updated"`
 }
@@ -80,4 +80,16 @@ type Tags []Tag
 type UseTags interface {
 	RemoveTag(id bson.ObjectId) (*mgo.ChangeInfo, error)
 	GetCollectionName() string
+}
+
+func removeDuplicatesTags(tags []bson.ObjectId) []bson.ObjectId {
+	result := []bson.ObjectId{}
+	seen := map[bson.ObjectId]bool{}
+	for _, tag := range tags {
+		if _, ok := seen[tag]; !ok {
+			result = append(result, tag)
+			seen[tag] = true
+		}
+	}
+	return result
 }

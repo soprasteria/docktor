@@ -8,7 +8,6 @@ import { SitesConstants } from '../sites/sites.actions';
 import { DaemonsConstants } from '../daemons/daemons.actions';
 import { UsersConstants } from '../users/users.actions';
 import { GroupsConstants } from '../groups/groups.actions';
-import { ServicesConstants } from '../services/services.actions';
 import { AuthConstants } from '../auth/auth.actions';
 import { ExportConstants } from '../export/export.actions';
 import { ToastsConstants } from './toasts.actions';
@@ -27,10 +26,6 @@ const toastsReducer = (state = initialState, action) => {
     case DaemonsConstants.INVALID_SAVE_DAEMON:
     case DaemonsConstants.INVALID_DELETE_DAEMON:
     case DaemonsConstants.INVALID_REQUEST_DAEMON_INFO:
-    case ServicesConstants.INVALID_REQUEST_SERVICES:
-    case ServicesConstants.INVALID_REQUEST_SERVICE:
-    case ServicesConstants.INVALID_SAVE_SERVICE:
-    case ServicesConstants.INVALID_DELETE_SERVICE:
     case GroupsConstants.INVALID_REQUEST_GROUPS:
     case GroupsConstants.INVALID_REQUEST_GROUP:
     case GroupsConstants.INVALID_SAVE_GROUP:

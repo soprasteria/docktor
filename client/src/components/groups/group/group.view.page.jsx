@@ -14,7 +14,6 @@ import TagsThunks from '../../../modules/tags/tags.thunks';
 import DaemonsThunks from '../../../modules/daemons/daemons.thunks';
 import GroupsThunks from '../../../modules/groups/groups.thunks';
 import UsersThunks from '../../../modules/users/users.thunks';
-import ServicesThunks from '../../../modules/services/services.thunks';
 
 // Selectors
 import { ALL_ROLES, getRoleData } from '../../../modules/auth/auth.actions';
@@ -22,7 +21,6 @@ import { GROUP_MODERATOR_ROLE } from '../../../modules/groups/groups.actions';
 
 // Components
 import HeadingBox from '../../common/boxes/box/heading.box.component';
-import ContainersBox from './containers/containers.box.component';
 
 // Style
 import './group.view.page.scss';
@@ -52,7 +50,6 @@ class GroupViewComponent extends React.Component {
       this.props.fetchTags(groupId);
       this.props.fetchDaemons(groupId);
       this.props.fetchMembers(groupId);
-      this.props.fetchServices(groupId);
     }
   }
 
@@ -132,8 +129,7 @@ class GroupViewComponent extends React.Component {
   }
 
   render = () => {
-    const { isFetching, group, daemons, tags, users, services } = this.props;
-    const { display, groupBy } = this.props;
+    const { isFetching, group, tags, users } = this.props;
     return (
       <div className='flex layout vertical start-justified group-view-page'>
         <Scrollbars ref='scrollbars' className='flex ui dimmable'>
@@ -163,7 +159,7 @@ class GroupViewComponent extends React.Component {
                 <Form as={HeadingBox} stacked className='box-component' icon='users' title='Members'>
                   {this.renderMembers(group, users)}
                 </Form>
-                <ContainersBox isFetching={isFetching} group={group} display={display} groupBy={groupBy} containers={group.containers || []} tags={tags || {}}  services={services || {}} daemons={daemons || []} />
+                {/*<ContainersBox isFetching={isFetching} group={group} display={display} groupBy={groupBy} containers={group.containers || []} tags={tags || {}}  services={services || {}} daemons={daemons || []} />*/}
               </Segment>
             </div>
           </div>
@@ -180,12 +176,10 @@ GroupViewComponent.propTypes = {
   daemons: PropTypes.object,
   tags: PropTypes.object,
   users: PropTypes.object,
-  services: PropTypes.object,
   fetchGroup: PropTypes.func.isRequired,
   fetchDaemons: PropTypes.func.isRequired,
   fetchTags: PropTypes.func.isRequired,
   fetchMembers: PropTypes.func.isRequired,
-  fetchServices: PropTypes.func.isRequired,
   onSave: PropTypes.func,
   onDelete: PropTypes.func,
   display: PropTypes.string,
@@ -208,7 +202,6 @@ const mapStateToProps = (state, ownProps) => {
   const daemons = state.daemons || [];
   const tags = state.tags || {};
   const users = state.users || {};
-  const services = state.services || {};
 
   // Props
   return {
@@ -220,7 +213,6 @@ const mapStateToProps = (state, ownProps) => {
     tags,
     daemons,
     users,
-    services
   };
 };
 
@@ -230,8 +222,7 @@ const mapDispatchToProps = (dispatch) => {
     fetchGroup: (id) => dispatch(GroupsThunks.fetch(id)),
     fetchDaemons: id => dispatch(DaemonsThunks.fetchGroupDaemons(id)),
     fetchTags: id => dispatch(TagsThunks.fetchGroupTags(id)),
-    fetchMembers: id => dispatch(UsersThunks.fetchGroupMembers(id)),
-    fetchServices: id => dispatch(ServicesThunks.fetchGroupServices(id))
+    fetchMembers: id => dispatch(UsersThunks.fetchGroupMembers(id))
   };
 };
 

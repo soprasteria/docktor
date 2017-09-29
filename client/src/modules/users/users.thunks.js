@@ -4,9 +4,7 @@ import { generateEntitiesThunks, entitiesSchema } from '../utils/entities';
 import UsersActions from './users.actions';
 import { checkHttpStatus, parseJSON, handleError } from '../utils/promises';
 
-// Thunk to get all tags used on a group:
-// - from group itself
-// - from containers and services
+// Thunk to get all members used on a group
 const fetchGroupMembers = (groupId) => {
   return function (dispatch) {
 
