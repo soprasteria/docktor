@@ -38,7 +38,7 @@ func (d *Daemons) GetAll(c echo.Context) error {
 	return c.JSON(http.StatusOK, docktorDaemons)
 }
 
-//Save daemon into docktor
+// Save daemon into docktor
 func (d *Daemons) Save(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	var daemon types.Daemon
@@ -125,7 +125,7 @@ func (d *Daemons) Save(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-//Delete daemon into docktor
+// Delete daemon into docktor
 func (d *Daemons) Delete(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	id := c.Param("daemonID")
@@ -149,7 +149,7 @@ func (d *Daemons) Delete(c echo.Context) error {
 	return c.String(http.StatusOK, res.Hex())
 }
 
-//Get daemon from docktor
+// Get daemon from docktor
 func (d *Daemons) Get(c echo.Context) error {
 	daemon := c.Get("daemon").(types.Daemon)
 	authenticatedUser, err := getUserFromToken(c)

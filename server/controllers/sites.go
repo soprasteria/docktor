@@ -19,7 +19,7 @@ import (
 type Sites struct {
 }
 
-//GetAll sites from docktor
+// GetAll sites from docktor
 func (s *Sites) GetAll(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	sites, err := docktorAPI.Sites().FindAll()
@@ -30,7 +30,7 @@ func (s *Sites) GetAll(c echo.Context) error {
 	return c.JSON(http.StatusOK, sites)
 }
 
-//Save site into docktor
+// Save site into docktor
 func (s *Sites) Save(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	var site types.Site
@@ -78,7 +78,7 @@ func (s *Sites) Save(c echo.Context) error {
 
 }
 
-//Delete site into docktor
+// Delete site into docktor
 func (s *Sites) Delete(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	id := c.Param("siteID")

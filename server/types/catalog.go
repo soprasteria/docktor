@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+	"regexp"
 	"time"
 
 	"gopkg.in/mgo.v2/bson"
@@ -11,6 +13,11 @@ const (
 	PrimaryContainerType ContainerType = "primary"
 	// SidekickContainerType is the type of container considered as a secondary container of a service (e.g. database of main application)
 	SidekickContainerType ContainerType = "sidekick"
+
+	// catalogService name is used to override user-friendly name of service.
+	// Meaning it has to be a valid service name.
+	// Here, it's a alphanum + underscore authorized string with up to 200 characters
+	catalogServiceNamePattern = `^[a-zA-Z0-9_]{1,200}$`
 )
 
 // CatatalogTemplate is an archetype to bootstrap a set of services
@@ -37,6 +44,44 @@ type CatalogService struct {
 	Tags     []bson.ObjectId                  `bson:"tags" json:"tags"`
 	Created  time.Time                        `bson:"created" json:"created"`
 	Updated  time.Time                        `bson:"updated" json:"updated"`
+}
+
+// NewCatalogService creates new catalogService for another one.
+// It helps setting default values, and cleaning duplicates
+func NewCatalogService(s CatalogService) CatalogService {
+	newCatalogService := s
+	// newCatalogService.Versions = removeDuplicatesVersion(s.Versions)
+	newCatalogService.Tags = removeDuplicatesTags(s.Tags)
+	return newCatalogService
+}
+
+/*
+// CatalogServiceVersions is a slice of multiple CatalogServiceVersions entities
+type CatalogServiceVersions []CatalogServiceVersion
+
+// removeDuplicatesVersion from a member list
+func removeDuplicatesVersion(catalogServiceVersions CatalogServiceVersions) CatalogServiceVersions {
+	result := CatalogServiceVersions{}
+	seen := map[string]bool{}
+	for _, catalogServiceVersion := range catalogServiceVersions {
+		if _, ok := seen[catalogServiceVersion.Name]; !ok {
+			result = append(result, catalogServiceVersion)
+			seen[catalogServiceVersion.Name] = true
+		}
+	}
+	return result
+}
+*/
+
+var catalogServiceNameRegex = regexp.MustCompile(catalogServiceNamePattern)
+
+// Validate validates semantic of fields in a catalogService (like the name)
+func (s CatalogService) Validate() error {
+
+	if !catalogServiceNameRegex.MatchString(s.Name) {
+		return fmt.Errorf("Name %q does not match regex %q", s.Name, catalogServiceNamePattern)
+	}
+	return nil
 }
 
 // CatalogServiceVersion defines a version for a service from catalog. It contains the version number and all its metadata

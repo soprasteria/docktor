@@ -148,8 +148,8 @@ func (a *Auth) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, Token{ID: token, User: user})
 }
 
-//ResetPassword handles resets the password of someone
-//When user reset his password, it generates an email to this person with a link to change his.
+// ResetPassword handles resets the password of someone
+// When user reset his password, it generates an email to this person with a link to change his.
 // The password is not reset in database because someone with bad intentions could use this feature to prevent someone else to login.
 func (a *Auth) ResetPassword(c echo.Context) error {
 	// Get input parameters
@@ -189,8 +189,8 @@ func (a *Auth) ResetPassword(c echo.Context) error {
 	return c.JSON(http.StatusOK, "OK")
 }
 
-//ChangeResetPassword changes the password of someone that reset it before
-//When user changes the password, he's automatically connected
+// ChangeResetPassword changes the password of someone that reset it before
+// When user changes the password, he's automatically connected
 func (a *Auth) ChangeResetPassword(c echo.Context) error {
 	// Get input parameters
 

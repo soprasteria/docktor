@@ -25,6 +25,7 @@ type Session interface {
 type Client interface {
 	Collections() []IsCollection
 	Groups() GroupsRepo
+	CatalogServices() CatalogServicesRepo
 	Daemons() DaemonsRepo
 	Users() UsersRepo
 	Sites() SitesRepo
@@ -46,12 +47,13 @@ type IsCollectionWithIndexes interface {
 // Docktor is the implementation structure to use the API
 // It contains API accessing to services, jobs, daemons, etc. + the open session
 type Docktor struct {
-	session Session
-	groups  GroupsRepo
-	daemons DaemonsRepo
-	users   UsersRepo
-	sites   SitesRepo
-	tags    TagsRepo
+	session         Session
+	groups          GroupsRepo
+	catalogServices CatalogServicesRepo
+	daemons         DaemonsRepo
+	users           UsersRepo
+	sites           SitesRepo
+	tags            TagsRepo
 }
 
 type appContext struct {
@@ -92,12 +94,13 @@ func Get() (Client, error) {
 	context := appContext{database}
 
 	return &Docktor{
-		groups:  NewGroupsRepo(context.db.C("groups")),
-		daemons: NewDaemonsRepo(context.db.C("daemons")),
-		users:   NewUsersRepo(context.db.C("users")),
-		sites:   NewSitesRepo(context.db.C("sites")),
-		tags:    NewTagsRepo(context.db.C("tags")),
-		session: s,
+		groups:          NewGroupsRepo(context.db.C("groups")),
+		catalogServices: NewCatalogServicesRepo(context.db.C("catalogServices")),
+		daemons:         NewDaemonsRepo(context.db.C("daemons")),
+		users:           NewUsersRepo(context.db.C("users")),
+		sites:           NewSitesRepo(context.db.C("sites")),
+		tags:            NewTagsRepo(context.db.C("tags")),
+		session:         s,
 	}, nil
 }
 
@@ -109,6 +112,11 @@ func (dock *Docktor) Close() {
 // Groups is the entrypoint for Groups API
 func (dock *Docktor) Groups() GroupsRepo {
 	return dock.groups
+}
+
+// CatalogServices is the entrypoint for CatalogServices API
+func (dock *Docktor) CatalogServices() CatalogServicesRepo {
+	return dock.catalogServices
 }
 
 // Daemons is the entrypoint for Daemons API
@@ -136,6 +144,7 @@ func (dock *Docktor) Collections() []IsCollection {
 	return []IsCollection{
 		dock.daemons,
 		dock.groups,
+		dock.catalogServices,
 		dock.users,
 		dock.sites,
 		dock.tags,

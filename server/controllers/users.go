@@ -18,7 +18,7 @@ import (
 type Users struct {
 }
 
-//GetAll users from docktor
+// GetAll users from docktor
 func (u *Users) GetAll(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	webservice := users.Rest{Docktor: docktorAPI}
@@ -106,7 +106,7 @@ func (u *Users) Update(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-//Delete user into docktor
+// Delete user into docktor
 func (u *Users) Delete(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	id := c.Param("userID")
@@ -196,7 +196,7 @@ func (u *Users) Profile(c echo.Context) error {
 	return c.JSON(http.StatusOK, user)
 }
 
-//Get user from docktor
+// Get user from docktor
 func (u *Users) Get(c echo.Context) error {
 	// No access control on purpose
 	user := c.Get("user").(users.UserRest)
