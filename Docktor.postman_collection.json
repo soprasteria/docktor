@@ -1,0 +1,513 @@
+{
+	"info": {
+		"name": "Docktor",
+		"_postman_id": "38808964-571e-1153-9ed0-5b6b394fb1ab",
+		"description": "This collection will test the CRUD of catologServices from Docktor",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "catalogServices",
+			"description": "",
+			"item": [
+				{
+					"name": "GET all catalogServices",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var contentTypeHeaderExists = responseHeaders.hasOwnProperty(\"Content-Type\");",
+									" ",
+									"tests[\"Has Content-Type\"] = contentTypeHeaderExists;",
+									" ",
+									"if (contentTypeHeaderExists) {",
+									"    tests[\"Content-Type is application/json\"] = ",
+									"      responseHeaders[\"Content-Type\"].has(\"application/json\");",
+									"}",
+									"",
+									"var data = JSON.parse(responseBody);",
+									"",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"tests[\"Response time is acceptable\"] = responseTime < 200; // milliseconds",
+									"",
+									"tests[\"ResponseBody contains version field \"] =responseBody.has(\"versions\");",
+									"tests[\"ResponseBody contains tags field \"] = responseBody.has(\"tags\");",
+									"tests[\"ResponseBody contains created field \"] = responseBody.has(\"created\");",
+									"tests[\"ResponseBody contains updated field \"] = responseBody.has(\"updated\");",
+									"",
+									"// Load the JSON Schema",
+									"const catalogServiceSchema = JSON.parse(environment.catalogServiceSchema);",
+									"",
+									"// Test whether the response matches the schema ",
+									"tests[\"CatalogService is valid\"] = tv4.validate(data, catalogServiceSchema);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InFmb3VjYXVsdCIsImV4cCI6MTUwODc2MDQ5MiwiaXNzIjoiZG9ja3RvciJ9.Lrikl1hm323SUgqz3u9Z9XRVcc9MrXn7t7cUVWwWjvI"
+							},
+							{
+								"key": "",
+								"value": "",
+								"disabled": true
+							},
+							{
+								"key": "",
+								"value": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{url}}/api/catalogServices",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"catalogServices"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "GET catalogService by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var contentTypeHeaderExists = responseHeaders.hasOwnProperty(\"Content-Type\");",
+									" ",
+									"tests[\"Has Content-Type\"] = contentTypeHeaderExists;",
+									" ",
+									"if (contentTypeHeaderExists) {",
+									"    tests[\"Content-Type is application/json\"] = ",
+									"      responseHeaders[\"Content-Type\"].has(\"application/json\");",
+									"}",
+									"",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"tests[\"Response time is acceptable\"] = responseTime < 200; // milliseconds",
+									"",
+									"tests[\"Catalog 1 contains version field \"] =responseBody.has(\"versions\");",
+									"tests[\"Catalog 1 contains tags field \"] = responseBody.has(\"tags\");",
+									"tests[\"Catalog 1 contains created field \"] = responseBody.has(\"created\");",
+									"tests[\"Catalog 1 contains updated field \"] = responseBody.has(\"updated\");",
+									"",
+									"// Load the JSON Schema",
+									"const catalogServiceSchema = JSON.parse(environment.catalogServiceSchema);",
+									"",
+									"// Test whether the response matches the schema ",
+									"tests[\"CatalogService is valid\"] = tv4.validate(responseBody, catalogServiceSchema);"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InFmb3VjYXVsdCIsImV4cCI6MTUwODc2MDQ5MiwiaXNzIjoiZG9ja3RvciJ9.Lrikl1hm323SUgqz3u9Z9XRVcc9MrXn7t7cUVWwWjvI"
+							},
+							{
+								"key": "",
+								"value": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{url}}/api/catalogServices/559fba2391b933ac02dec738",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"catalogServices",
+								"559fba2391b933ac02dec738"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "GET catalogService's tag by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var contentTypeHeaderExists = responseHeaders.hasOwnProperty(\"Content-Type\");",
+									" ",
+									"tests[\"Has Content-Type\"] = contentTypeHeaderExists;",
+									" ",
+									"if (contentTypeHeaderExists) {",
+									"    tests[\"Content-Type is application/json\"] = ",
+									"      responseHeaders[\"Content-Type\"].has(\"application/json\");",
+									"}",
+									"",
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"tests[\"Response time is acceptable\"] = responseTime < 200; // milliseconds"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InFmb3VjYXVsdCIsImV4cCI6MTUwODc2MDQ5MiwiaXNzIjoiZG9ja3RvciJ9.Lrikl1hm323SUgqz3u9Z9XRVcc9MrXn7t7cUVWwWjvI"
+							},
+							{
+								"key": "",
+								"value": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{url}}/api/catalogServices/559fba2391b933ac02dec738/tags",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"catalogServices",
+								"559fba2391b933ac02dec738",
+								"tags"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "POST new catalogService",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var contentTypeHeaderExists = responseHeaders.hasOwnProperty(\"Content-Type\");",
+									" ",
+									"tests[\"Has Content-Type\"] = contentTypeHeaderExists;",
+									" ",
+									"if (contentTypeHeaderExists) {",
+									"    tests[\"Content-Type is application/json\"] = ",
+									"      responseHeaders[\"Content-Type\"].has(\"application/json\");",
+									"}",
+									"",
+									"tests[\"Successful POST request\"] = responseCode.code === 201 || responseCode.code === 202;",
+									"tests[\"Response time is acceptable\"] = responseTime < 200; // milliseconds",
+									"tests[\"Content-Type header is set\"] = postman.getResponseHeader(\"Content-Type\");",
+									"",
+									"tests[\"ResponseBody contains version field \"] =responseBody.has(\"versions\");",
+									"tests[\"ResponseBody contains tags field \"] = responseBody.has(\"tags\");",
+									"tests[\"ResponseBody contains created field \"] = responseBody.has(\"created\");",
+									"tests[\"ResponseBody contains updated field \"] = responseBody.has(\"updated\");",
+									"",
+									"// Load the JSON Schema",
+									"const catalogServiceSchema = JSON.parse(environment.catalogServiceSchema);",
+									"",
+									"// Test whether the response matches the schema ",
+									"tests[\"CatalogService is valid\"] = tv4.validate(responseBody, catalogServiceSchema);",
+									"",
+									"// Extract this newly created catalogService and store it:",
+									"var catalogServiceLink = postman.getResponseHeader(\"location\");",
+									"postman.setEnvironmentVariable(\"catalogServiceLink\", catalogServiceLink);",
+									"",
+									"// Store the body of this new catalog service",
+									"var catalogServiceBody = responseBody;",
+									"postman.setEnvironmentVariable(\"catalogServiceBody\", catalogServiceBody);",
+									"",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InFmb3VjYXVsdCIsImV4cCI6MTUwODc2MDQ5MiwiaXNzIjoiZG9ja3RvciJ9.Lrikl1hm323SUgqz3u9Z9XRVcc9MrXn7t7cUVWwWjvI"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "",
+								"value": "",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": " {\n        \"id\": \"\",\n        \"name\": \"TEST-POST\",\n        \"versions\": {},\n        \"tags\": [],\n        \"created\": \"\",\n        \"updated\": \"\"\n    }"
+						},
+						"url": {
+							"raw": "{{url}}/api/catalogServices/new",
+							"host": [
+								"{{url}}"
+							],
+							"path": [
+								"api",
+								"catalogServices",
+								"new"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Validate that the post was created",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"tests[\"Response time is acceptable\"] = responseTime < 200; // milliseconds",
+									"",
+									"tests[\"ResponseBody contains version field \"] =responseBody.has(\"versions\");",
+									"tests[\"ResponseBody contains tags field \"] = responseBody.has(\"tags\");",
+									"tests[\"ResponseBody contains created field \"] = responseBody.has(\"created\");",
+									"tests[\"ResponseBody contains updated field \"] = responseBody.has(\"updated\");",
+									"",
+									"// Load the JSON Schema",
+									"const catalogServiceSchema = JSON.parse(environment.catalogServiceSchema);",
+									"",
+									"// Test whether the response matches the schema ",
+									"tests[\"CatalogService is valid\"] = tv4.validate(data, catalogServiceSchema);",
+									"",
+									"tests[\"Has correct catalog service posted\"] = responseBody === environment.catalogServiceBody;"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InFmb3VjYXVsdCIsImV4cCI6MTUwODc2MDQ5MiwiaXNzIjoiZG9ja3RvciJ9.Lrikl1hm323SUgqz3u9Z9XRVcc9MrXn7t7cUVWwWjvI"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{catalogServiceLink}}",
+							"host": [
+								"{{catalogServiceLink}}"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "PUT catalogService just created",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var contentTypeHeaderExists = responseHeaders.hasOwnProperty(\"Content-Type\");",
+									" ",
+									"tests[\"Has Content-Type\"] = contentTypeHeaderExists;",
+									" ",
+									"if (contentTypeHeaderExists) {",
+									"    tests[\"Content-Type is application/json\"] = ",
+									"      responseHeaders[\"Content-Type\"].has(\"application/json\");",
+									"}",
+									"",
+									"tests[\"Successful PUT request\"] = responseCode.code === 200 || responseCode.code === 204;",
+									"tests[\"Response time is acceptable\"] = responseTime < 200; // milliseconds",
+									"tests[\"Content-Type header is set\"] = postman.getResponseHeader(\"Content-Type\");",
+									"",
+									"tests[\"ResponseBody contains version field \"] =responseBody.has(\"versions\");",
+									"tests[\"ResponseBody contains tags field \"] = responseBody.has(\"tags\");",
+									"tests[\"ResponseBody contains created field \"] = responseBody.has(\"created\");",
+									"tests[\"ResponseBody contains updated field \"] = responseBody.has(\"updated\");",
+									"",
+									"// Load the JSON Schema",
+									"const catalogServiceSchema = JSON.parse(environment.catalogServiceSchema);",
+									"",
+									"// Test whether the response matches the schema ",
+									"tests[\"CatalogService is valid\"] = tv4.validate(responseBody, catalogServiceSchema);",
+									"",
+									"// Store the body of this updated catalog service",
+									"var catalogServiceBody = responseBody;",
+									"postman.setEnvironmentVariable(\"catalogServiceBody\", catalogServiceBody);",
+									""
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InFmb3VjYXVsdCIsImV4cCI6MTUwODc2MDQ5MiwiaXNzIjoiZG9ja3RvciJ9.Lrikl1hm323SUgqz3u9Z9XRVcc9MrXn7t7cUVWwWjvI"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "",
+								"value": "",
+								"disabled": true
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\t    \n\t    \"id\": \"\",\n        \"name\": \"TEST_POST_UPDATED\",\n        \"versions\": null,\n        \"tags\": null,\n        \"created\": null,\n        \"updated\": null\n}\n    "
+						},
+						"url": {
+							"raw": "{{catalogServiceLink}}",
+							"host": [
+								"{{catalogServiceLink}}"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": " Verify that the catalogService have been updated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 200\"] = responseCode.code === 200;",
+									"tests[\"Response time is acceptable\"] = responseTime < 200; // milliseconds",
+									"",
+									"tests[\"Has correct updated text\"] = responseBody === environment.catalogServiceBody"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InFmb3VjYXVsdCIsImV4cCI6MTUwODc2MDQ5MiwiaXNzIjoiZG9ja3RvciJ9.Lrikl1hm323SUgqz3u9Z9XRVcc9MrXn7t7cUVWwWjvI"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{catalogServiceLink}}",
+							"host": [
+								"{{catalogServiceLink}}"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "DELET catalogService by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var contentTypeHeaderExists = responseHeaders.hasOwnProperty(\"Content-Type\");",
+									" ",
+									"tests[\"Has Content-Type\"] = contentTypeHeaderExists;",
+									" ",
+									"if (contentTypeHeaderExists) {",
+									"    tests[\"Content-Type is application/json\"] = ",
+									"      responseHeaders[\"Content-Type\"].has(\"application/json\");",
+									"}",
+									"",
+									"tests[\"Successful DELETE request\"] = responseCode.code === 200 || responseCode.code === 204 || responseCode.code === 202;",
+									"tests[\"Response time is acceptable\"] = responseTime < 200; // milliseconds"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InFmb3VjYXVsdCIsImV4cCI6MTUwODc2MDQ5MiwiaXNzIjoiZG9ja3RvciJ9.Lrikl1hm323SUgqz3u9Z9XRVcc9MrXn7t7cUVWwWjvI"
+							},
+							{
+								"key": "",
+								"value": "",
+								"disabled": true
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{catalogServiceLink}}",
+							"host": [
+								"{{catalogServiceLink}}"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				},
+				{
+					"name": "Verify that the catalogService post has been deleted",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"tests[\"Status code is 404\"] = responseCode.code === 404;"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InFmb3VjYXVsdCIsImV4cCI6MTUwODc2MDQ5MiwiaXNzIjoiZG9ja3RvciJ9.Lrikl1hm323SUgqz3u9Z9XRVcc9MrXn7t7cUVWwWjvI"
+							}
+						],
+						"body": {},
+						"url": {
+							"raw": "{{catalogServiceLink}}",
+							"host": [
+								"{{catalogServiceLink}}"
+							]
+						},
+						"description": ""
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

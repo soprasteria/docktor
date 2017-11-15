@@ -31,7 +31,7 @@ func init() {
 	serveCmd.Flags().StringP("jwt-secret", "j", "dev-docktor-secret", "Secret key used for JWT token authentication. Change it in your instance")
 	serveCmd.Flags().StringP("reset-pwd-secret", "", "dev-docktor-reset-pwd-to-change", "Secret key used when resetting the password. Change it in your instance")
 	serveCmd.Flags().StringP("bcrypt-pepper", "p", "dev-docktor-bcrypt", "Pepper used in password generation. Change it in your instance")
-	serveCmd.Flags().StringP("env", "e", "prod", "dev or prod")
+	serveCmd.Flags().StringP("env", "e", "dev", "dev or prod")
 	serveCmd.Flags().String("encrypt-secret", "encrypt-secret-to-change", "Secret for sensible data encryption. Change it in your instance")
 	serveCmd.Flags().String("ldap-address", "", "LDAP full address like : ldap.server:389. Optional")
 	serveCmd.Flags().String("ldap-baseDN", "", "BaseDN. Optional")

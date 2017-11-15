@@ -32,7 +32,7 @@ var cfgFile string
 var RootCmd = &cobra.Command{
 	Use:   "docktor",
 	Short: "Administration & Monitoring Deployment with Docker",
-	Long: `Docktor is a web application which aims to make the deployment of docke services easier
+	Long: `Docktor is a web application which aims to make the deployment of docker services easier.
 With it, you can manage several daemons, services and group.
 Each service can be deployed on a daemon for a group.
 	`,

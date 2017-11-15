@@ -12,6 +12,7 @@ import (
 	"github.com/labstack/echo/middleware"
 	"github.com/soprasteria/docktor/server/controllers"
 	"github.com/soprasteria/docktor/server/controllers/auth"
+	"github.com/soprasteria/docktor/server/controllers/catalogServices"
 	"github.com/soprasteria/docktor/server/controllers/daemons"
 	"github.com/soprasteria/docktor/server/controllers/groups"
 	"github.com/soprasteria/docktor/server/controllers/users"
@@ -39,6 +40,7 @@ func New() {
 	usersC := controllers.Users{}
 	authC := controllers.Auth{}
 	exportC := controllers.Export{}
+	catalogServicesC := controllers.CatalogServices{}
 
 	engine.Use(middleware.Logger())
 	engine.Use(middleware.Recover())
@@ -124,6 +126,20 @@ func New() {
 				groupAPI.GET("/daemons", groupsC.GetDaemons, groups.RetrieveGroup)
 				groupAPI.DELETE("", groupsC.Delete, hasRole(types.AdminRole))
 				groupAPI.PUT("", groupsC.Save)
+			}
+		}
+
+		catalogServicesAPI := api.Group("/catalogServices")
+		{
+			catalogServicesAPI.GET("", catalogServicesC.GetAll)
+			catalogServicesAPI.POST("/new", catalogServicesC.Save, hasRole(types.AdminRole))
+			catalogServiceAPI := catalogServicesAPI.Group("/:catalogServiceID")
+			{
+				catalogServiceAPI.Use(isValidID("catalogServiceID"))
+				catalogServiceAPI.GET("", catalogServicesC.Get, catalogServices.RetrieveCatalogService)
+				catalogServiceAPI.GET("/tags", catalogServicesC.GetTags, catalogServices.RetrieveCatalogService)
+				catalogServiceAPI.DELETE("", catalogServicesC.Delete, hasRole(types.AdminRole))
+				catalogServiceAPI.PUT("", catalogServicesC.Save)
 			}
 		}
 

@@ -20,7 +20,7 @@ const TagAlreadyExistErrMessage string = "Tag %q already exists in category %q"
 type Tags struct {
 }
 
-//GetAll tags from docktor
+// GetAll tags from docktor
 func (s *Tags) GetAll(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	tags, err := docktorAPI.Tags().FindAll()
@@ -31,7 +31,7 @@ func (s *Tags) GetAll(c echo.Context) error {
 	return c.JSON(http.StatusOK, tags)
 }
 
-//Save or update tag into docktor
+// Save or update tag into docktor
 func (s *Tags) Save(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 
@@ -94,7 +94,7 @@ func (s *Tags) Save(c echo.Context) error {
 	return c.JSON(http.StatusOK, res)
 }
 
-//Delete tag into docktor
+// Delete tag into docktor
 func (s *Tags) Delete(c echo.Context) error {
 
 	docktorAPI := c.Get("api").(*storage.Docktor)
@@ -104,7 +104,7 @@ func (s *Tags) Delete(c echo.Context) error {
 		docktorAPI.Daemons(),
 		docktorAPI.Users(),
 		docktorAPI.Groups(),
-		// TODO : add others collections (groups, services ...)
+		docktorAPI.CatalogServices(),
 	}
 
 	// Remove tags from all collections containings tags

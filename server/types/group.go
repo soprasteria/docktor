@@ -174,7 +174,7 @@ func (role MemberRole) IsValid() bool {
 	return role == MemberModeratorRole || role == MemberUserRole
 }
 
-// Member is user whois subscribed to the groupe. His role in this group defines what he is able to do.
+// Member is user who is subscribed to the groupe. His role in this group defines what he is able to do.
 type Member struct {
 	User bson.ObjectId `bson:"user" json:"user" validate:"required"`
 	Role MemberRole    `bson:"role" json:"role" validate:"required"`

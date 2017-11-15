@@ -12,7 +12,7 @@
     "vetshadow",
     "gas",
     "varcheck",
-    "aligncheck",
+    "maligned",
     "interfacer"
   ],
   "Cyclo": 15,

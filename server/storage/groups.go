@@ -30,7 +30,7 @@ type GroupsRepo interface {
 	FindAll() ([]types.Group, error)
 	// FindAllByName get all groups by the give name
 	FindAllByName(name string) ([]types.Group, error)
-	// FindAllByIDs get all groups from thei ids
+	// FindAllByIDs get all groups from their ids
 	FindAllByIDs(ids []bson.ObjectId) ([]types.Group, error)
 	// FindAllByRegex get all groups by the regex name
 	FindAllByRegex(nameRegex string) ([]types.Group, error)

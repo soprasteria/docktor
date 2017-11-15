@@ -19,7 +19,7 @@ import (
 type Groups struct {
 }
 
-//GetAll groups from docktor
+// GetAll groups from docktor
 func (g *Groups) GetAll(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	groups, err := docktorAPI.Groups().FindAll()
@@ -30,7 +30,7 @@ func (g *Groups) GetAll(c echo.Context) error {
 	return c.JSON(http.StatusOK, groups)
 }
 
-//Save group into docktor
+// Save group into docktor
 func (g *Groups) Save(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	var group types.Group
@@ -151,7 +151,7 @@ func existingFileSystems(docktorAPI *storage.Docktor, fileSystems types.FileSyst
 	return existingFileSystems
 }
 
-//Delete group into docktor
+// Delete group into docktor
 func (g *Groups) Delete(c echo.Context) error {
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	id := c.Param("groupID")
@@ -166,7 +166,7 @@ func (g *Groups) Delete(c echo.Context) error {
 	return c.String(http.StatusOK, res.Hex())
 }
 
-//Get group from docktor
+// Get group from docktor
 func (g *Groups) Get(c echo.Context) error {
 	group := c.Get("group").(types.Group)
 	return c.JSON(http.StatusOK, group)
@@ -175,36 +175,38 @@ func (g *Groups) Get(c echo.Context) error {
 // GetTags get all tags from a given group
 // It is able to get get tags from sub entities (like containers and services if needed)
 func (g *Groups) GetTags(c echo.Context) error {
-	// withServices, _ := strconv.ParseBool(c.QueryParam("services"))     // Get all tags from a given daemon
-	// withcontainers, _ := strconv.ParseBool(c.QueryParam("containers")) // Get all tags from a given Users
+	//withServices, _ := strconv.ParseBool(c.QueryParam("services")) // Get all tags from a given daemon
+	//withcontainers, _ := strconv.ParseBool(c.QueryParam("containers")) // Get all tags from a given Users
 	group := c.Get("group").(types.Group)
 	docktorAPI := c.Get("api").(*storage.Docktor)
 	tagIds := group.Tags
 
-	// TODO : enable it when containers and services are used again.
-	// Get also tags from container instances of group
-	// if withcontainers {
-	// 	for _, c := range group.Containers {
-	// 		tagIds = append(tagIds, c.Tags...)
-	// 	}
-	// }
-	// // Get also tags from the type of containers (= service)
-	// if withServices {
-	// 	var serviceIds []bson.ObjectId
-	// 	// Get services from containers
-	// 	for _, c := range group.Containers {
-	// 		serviceIds = append(serviceIds, c.ServiceID)
-	// 	}
-	// 	services, err := docktorAPI.Services().FindAllByIDs(serviceIds)
-	// 	if err != nil {
-	// 		log.WithError(err).WithField("group", group.ID).WithField("services.ids", serviceIds).Error("Can't get tags of service")
-	// 		return c.JSON(http.StatusInternalServerError, "Incorrect data. Contact your administrator")
-	// 	}
-	// 	// Get tags from services
-	// 	for _, s := range services {
-	// 		tagIds = append(tagIds, s.Tags...)
-	// 	}
-	// }
+	/*
+		// TODO : enable it when containers and services are used again.
+		// Get also tags from container instances of group
+		if withcontainers {
+			for _, c := range group.Containers {
+				tagIds = append(tagIds, c.Tags...)
+			}
+		}
+		//Get also tags from the type of containers (= service)
+		if withServices {
+			var serviceIds []bson.ObjectId
+			// Get services from containers
+			for _, c := range group.Containers {
+				serviceIds = append(serviceIds, c.ServiceID)
+			}
+			services, err := docktorAPI.CatalogServices().FindAllByIDs(serviceIds)
+			if err != nil {
+				log.WithError(err).WithField("group", group.ID).WithField("services.ids", serviceIds).Error("Can't get tags of service")
+				return c.JSON(http.StatusInternalServerError, "Incorrect data. Contact your administrator")
+			}
+			// Get tags from services
+			for _, s := range services {
+				tagIds = append(tagIds, s.Tags...)
+			}
+		}
+	*/
 
 	tags, err := docktorAPI.Tags().FindAllByIDs(tagIds)
 	if err != nil {
@@ -243,10 +245,12 @@ func (g *Groups) GetDaemons(c echo.Context) error {
 		daemonIds = append(daemonIds, fs.Daemon)
 	}
 
-	// TODO : enable it when containers and services are used again.
-	// for _, c := range group.Containers {
-	// 	daemonIds = append(daemonIds, c.DaemonID)
-	// }
+	/*
+		// TODO : enable it when containers and services are used again.
+		for _, c := range group.Containers {
+			daemonIds = append(daemonIds, c.DaemonID)
+		}
+	*/
 
 	ds, err := docktorAPI.Daemons().FindAllByIDs(daemonIds)
 	if err != nil {
