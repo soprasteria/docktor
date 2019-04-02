@@ -1,0 +1,32 @@
+version: "2"
+
+services:
+  docktor:
+    build: .
+    environment: 
+     - MAILER_FROM=cdk.system@soprasteria.com
+     - MAILER_HOST=ptx.send.corp.sopra
+     - MAILER_PORT=587
+     - MAILER_EMAIL_ID=cdk.system
+     - MAILER_PASSWORD=${CDK_SYSTEM_PASSWORD}
+     - NODE_ENV=development
+    ports:
+      - "3000:3000"
+    networks: 
+      - docktor-net
+  mongodb:
+    image: mongo:3.4
+    ports:
+      - "9001:27017"
+    volumes: 
+     - /data/CDK/docktor/data/db:/data/db"
+     - /etc/localtime:/etc/localtime:ro
+
+    networks: 
+      docktor-net:
+        aliases:
+          - db_1
+
+
+networks:
+  docktor-net:
