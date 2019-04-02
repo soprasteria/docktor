@@ -1,4 +1,6 @@
-FROM debian:jessie
+#FROM debian:jessie
+FROM ubuntu:xenial
+
 
 # Proxy variables, only for build
 ARG HTTP_PROXY="http://renn.proxy.corp.sopra:8080/"
