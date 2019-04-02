@@ -114,7 +114,7 @@
         </table>
     </div>
 
-    <h4 ng-hide="group.isSSO">Urls</h4>
+    <h4 ng-hide="group.isSSO && container.urls.length == 0">Urls</h4>
 
     <div ng-hide="group.isSSO || container.urls.length > 0" class="label label-info">No url attached to this service.</div>
     <div ng-repeat="url in container.urls">

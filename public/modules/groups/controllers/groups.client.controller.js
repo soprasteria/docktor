@@ -145,7 +145,10 @@ angular.module('groups').controller('GroupsController', ['$scope', '$stateParams
                                 var urls = container.urls;
                                 container.urls = [];
                                 angular.forEach(urls, function (url, key) {
-                                    container.urls.push($scope.computeUrl(container, url));
+                                    var cUrl = $scope.computeUrl(container, url)
+                                    if (cUrl && cUrl.urlCompute && cUrl.urlCompute.length > 0) {
+                                        container.urls.push(cUrl);
+                                    }
                                 });
                             }
                             $scope.prepareJobs(container);

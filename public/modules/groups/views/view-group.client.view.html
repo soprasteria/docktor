@@ -181,7 +181,7 @@
                     <md-button class="md-accent md-hue-3" href="#!/groups/{{group._id}}/{{gridItem._id}}">
                         {{gridItem.name.length >= 1 ? gridItem.name.substring(1): ''}}
                     </md-button>
-                    <div ng-hide="group.isSSO">
+                    <div>
                         <span ng-repeat="url in gridItem.urls">
                             <md-button class="md-accent md-hue-3" href={{url.urlCompute}}>
                                 <i class="fa fa-link"></i> {{url.label}}
