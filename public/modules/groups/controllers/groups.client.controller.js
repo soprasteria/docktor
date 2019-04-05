@@ -487,7 +487,9 @@ angular.module('groups').controller('GroupsController', ['$scope', '$stateParams
                     urlWithoutPort = url.url.substr(pos, url.url.length);
                     if (!urlWithoutPort) urlWithoutPort = '';
                 }
-                var portMapping = _.where(container.ports, { 'internal': parseInt(portInContainer), 'host': '' });
+                var portMapping = _.filter(container.ports, function(port){
+                    return port.internal === parseInt(portInContainer) && (!port.host || port.host.length == 0 )
+                })
                 var portExternal = '';
                 if (portMapping && portMapping.length > 0) portExternal = ':' + portMapping[0].external;
 

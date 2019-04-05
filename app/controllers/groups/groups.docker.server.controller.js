@@ -99,7 +99,7 @@ exports.createContainer = function (req, res) {
 
     containerParameters.HostConfig.NetworkMode = container.networkMode;
 
-    if (["bridge", "host", "none"].indexOf(container.networkMode) === -1) {
+    if (container.networkMode && ["bridge", "host", "none", ""].indexOf(container.networkMode) === -1) {
         var endpointsConfig = {}
         var alias = container.name.substring(1, container.name.length-6) // remove '/' at the beginning and '.local' at the end
         alias = alias.replace(group.title, "") // remove group name prefix
